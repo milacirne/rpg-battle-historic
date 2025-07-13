@@ -1,8 +1,12 @@
+import type React from "react"
+
 import { useState } from "react"
 import BattleTable from "../components/BattleTable"
+import { CreateMissionModal } from "../components/CreateMissionModal"
+import { ConfirmDeleteModal } from "../components/ConfirmDeleteModal"
 import { v4 as uuidv4 } from "uuid"
 
-type RPType = 'Oficial' | 'Semi-Oficial' | 'Livre'
+type RPType = "Oficial" | "Semi-Oficial" | "Livre"
 
 type BattleSheet = {
   id: string
@@ -18,7 +22,10 @@ type Props = {
 }
 
 export default function MainPage({ sheets, setSheets }: Props) {
-  const [modalOpen, setModalOpen] = useState(false)
+  const [createMissionModalOpen, setCreateMissionModalOpen] = useState(false) // Renomeado para clareza
+  const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = useState(false) // Novo estado
+  const [missionToDeleteId, setMissionToDeleteId] = useState<string | null>(null) // Novo estado
+
   const [name, setName] = useState("")
   const [type, setType] = useState<RPType>("Oficial")
   const [location, setLocation] = useState("")
@@ -27,19 +34,19 @@ export default function MainPage({ sheets, setSheets }: Props) {
     return today.toISOString().split("T")[0]
   })
 
-  function openModal() {
-    setModalOpen(true)
+  function openCreateMissionModal() {
+    setCreateMissionModalOpen(true)
   }
 
-  function closeModal() {
-    setModalOpen(false)
+  function closeCreateMissionModal() {
+    setCreateMissionModalOpen(false)
     setName("")
     setType("Oficial")
     setLocation("")
     setDate(new Date().toISOString().split("T")[0])
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  function handleCreateMissionSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!name.trim() || !location.trim()) {
       alert("Por favor, preencha Nome e Local.")
@@ -52,8 +59,26 @@ export default function MainPage({ sheets, setSheets }: Props) {
       location: location.trim(),
       createdAt: new Date(date).toISOString(),
     }
-    setSheets(prev => [...prev, newSheet])
-    closeModal()
+    setSheets((prev) => [...prev, newSheet])
+    closeCreateMissionModal()
+  }
+
+  function handleDeleteMissionClick(id: string) {
+    setMissionToDeleteId(id)
+    setConfirmDeleteModalOpen(true)
+  }
+
+  function handleConfirmDelete() {
+    if (missionToDeleteId) {
+      setSheets((prev) => prev.filter((sheet) => sheet.id !== missionToDeleteId))
+      setMissionToDeleteId(null)
+      setConfirmDeleteModalOpen(false)
+    }
+  }
+
+  function handleCancelDelete() {
+    setMissionToDeleteId(null)
+    setConfirmDeleteModalOpen(false)
   }
 
   return (
@@ -61,7 +86,7 @@ export default function MainPage({ sheets, setSheets }: Props) {
       <h1 className="text-3xl font-bold mb-6">Histórico de Batalhas</h1>
 
       <button
-        onClick={openModal}
+        onClick={openCreateMissionModal}
         className="bg-blue-600 text-white px-4 py-2 rounded cursor-pointer hover:bg-blue-700 transition mb-6 max-w-max"
       >
         Nova Missão
@@ -70,50 +95,34 @@ export default function MainPage({ sheets, setSheets }: Props) {
       {sheets.length === 0 ? (
         <p className="text-gray-600">Nenhuma missão criada ainda.</p>
       ) : (
-        <BattleTable sheets={sheets} />
+        <BattleTable sheets={sheets} onDeleteMission={handleDeleteMissionClick} />
       )}
 
-      {modalOpen && (
-        <div
-          className="fixed inset-0 flex items-center justify-center z-50"
-          style={{
-            backgroundColor: "rgba(0, 0, 0, 0.5)",
-            backdropFilter: "blur(4px)",
-            WebkitBackdropFilter: "blur(4px)",
-          }}
-        >
-          <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
-            <h2 className="text-xl font-semibold mb-4">Nova Missão</h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="flex justify-end space-x-3 mt-6">
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  className="px-4 py-2 rounded border border-gray-300 hover:bg-gray-100 transition"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
-                >
-                  Adicionar
-                </button>
-              </div>
-            </form>
-            <button
-              onClick={closeModal}
-              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
-              aria-label="Fechar modal"
-            >
-              ✕
-            </button>
-          </div>
-        </div>
-      )}
+      <CreateMissionModal
+        modalOpen={createMissionModalOpen}
+        name={name}
+        setName={setName}
+        type={type}
+        setType={setType}
+        location={location}
+        setLocation={setLocation}
+        date={date}
+        setDate={setDate}
+        onClose={closeCreateMissionModal}
+        onSubmit={handleCreateMissionSubmit}
+      />
+
+      <ConfirmDeleteModal
+        isOpen={confirmDeleteModalOpen}
+        onClose={handleCancelDelete}
+        onConfirm={handleConfirmDelete}
+        title="Confirmar Exclusão"
+        message="Tem certeza de que deseja excluir esta missão? Esta ação não pode ser desfeita."
+      />
     </div>
   )
 }
+
 
 
 

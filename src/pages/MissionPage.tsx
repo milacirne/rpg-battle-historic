@@ -81,13 +81,9 @@ export default function MissionPage({ sheets }: Props) {
     if (editingMember) {
       // Editando membro
       if (modalTeam === "team1") {
-        setTeam1Members((prev) =>
-          prev.map((m) => (m.id === member.id ? member : m))
-        )
+        setTeam1Members((prev) => prev.map((m) => (m.id === member.id ? member : m)))
       } else {
-        setTeam2Members((prev) =>
-          prev.map((m) => (m.id === member.id ? member : m))
-        )
+        setTeam2Members((prev) => prev.map((m) => (m.id === member.id ? member : m)))
       }
     } else {
       // Adicionando membro novo
@@ -117,6 +113,7 @@ export default function MissionPage({ sheets }: Props) {
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       {/* Header */}
+      {/* As props name, location, createdAt, type são passadas diretamente do objeto mission */}
       <MissionHeader
         name={mission.name}
         location={mission.location}
@@ -160,7 +157,6 @@ export default function MissionPage({ sheets }: Props) {
               <FaChevronRight size={28} />
             </button>
           </div>
-
 
           <main className="w-full flex flex-col sm:flex-row gap-4">
             {/* Equipe 1 */}
@@ -241,8 +237,6 @@ export default function MissionPage({ sheets }: Props) {
     </div>
   )
 }
-
-
 
 
 
