@@ -1,7 +1,7 @@
 import { useState } from "react"
 import MemberInfoModal from "./MemberInfoModal"
 import StatBar from "./StatBar"
-import type { Member } from "./AddMemberModal"
+import type { Member } from "../constants/rpg.data"
 
 
 type MemberCardProps = {

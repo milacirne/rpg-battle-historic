@@ -1,4 +1,4 @@
-import type { Member } from "./AddMemberModal"
+import type { Member } from "../constants/rpg.data"
 
 type Props = {
   member: Member

@@ -1,4 +1,4 @@
-import React from "react"
+import type React from "react"
 
 type Props = {
   team1Name: string
@@ -28,7 +28,7 @@ export default function CreateTeamsModal({
 
   return (
     <div
-      className="fixed inset-0 flex items-center justify-center z-50"
+      className="fixed inset-0 flex items-center justify-center z-50 p-4" // Adicionado p-4 aqui para espaçamento nas bordas
       style={{
         backgroundColor: "rgba(0, 0, 0, 0.5)",
         backdropFilter: "blur(4px)",
@@ -36,10 +36,7 @@ export default function CreateTeamsModal({
       }}
       onClick={onClose}
     >
-      <div
-        className="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative" onClick={(e) => e.stopPropagation()}>
         <h3 className="text-lg font-bold mb-4">Defina os nomes das equipes</h3>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -99,3 +96,4 @@ export default function CreateTeamsModal({
     </div>
   )
 }
+

@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom"
-import { FaArrowLeft } from "react-icons/fa"
+import { FaHome } from "react-icons/fa"
+import { PiMapPin, PiCalendarBlank } from "react-icons/pi"
 
 type RPType = "Oficial" | "Semi-Oficial" | "Livre"
 
@@ -12,63 +13,64 @@ type MissionHeaderProps = {
 
 function formatDate(dateString: string) {
   const date = new Date(dateString)
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, "0")
-  const day = String(date.getDate()).padStart(2, "0")
 
-  return `${day}/${month}/${year}`
+  return date.toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  })
 }
 
 export default function MissionHeader({ name, location, createdAt, type }: MissionHeaderProps) {
   const navigate = useNavigate()
 
+  const typeColors = {
+    "Oficial": "bg-blue-100 text-blue-800",
+    "Semi-Oficial": "bg-yellow-100 text-yellow-800",
+    "Livre": "bg-gray-200 text-gray-700",
+  }
+
   return (
-    <header className="w-full bg-white py-6 mb-8 shadow rounded-lg">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 px-6">
-        {/* Botão Voltar estilizado */}
+    <header className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-5 sm:px-6 sm:py-6 shadow-sm">
+      <div className="flex items-start justify-between mb-4">
         <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg shadow hover:bg-purple-700 transition cursor-pointer"
-          aria-label="Voltar"
+          onClick={() => navigate("/")}
+          className="flex items-center gap-2 text-sm font-medium text-white bg-purple-400 border border-gray-300 rounded-full px-4 py-2 shadow-sm hover:bg-purple-500 hover:shadow-md transition-all duration-300 cursor-pointer"
         >
-          <FaArrowLeft className="w-5 h-5" />
-          <span>Voltar</span>
+          <FaHome className="text-base" />
+
         </button>
 
-        <h1 className="text-4xl font-extrabold text-gray-900 flex-1">{name}</h1>
 
-        <div className="flex flex-wrap sm:flex-nowrap gap-4 text-gray-600 text-sm font-medium">
+        <span
+          className={`px-4 py-1 rounded-full text-s font-medium ${typeColors[type]}`}
+        >
+          {type}
+        </span>
+      </div>
+
+      <div className="space-y-2 sm:space-y-1">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">
+          {name}
+        </h1>
+
+        <div className="flex flex-wrap gap-4 text-gray-600 text-sm mt-2">
           <div className="flex items-center gap-1">
-            <span className="bg-purple-100 text-purple-700 rounded-full px-3 py-1 uppercase tracking-wide">
-              Local
-            </span>
+            <PiMapPin className="text-lg" />
             <span>{location}</span>
           </div>
 
           <div className="flex items-center gap-1">
-            <span className="bg-green-100 text-green-700 rounded-full px-3 py-1 uppercase tracking-wide">
-              Data
-            </span>
+            <PiCalendarBlank className="text-lg" />
             <span>{formatDate(createdAt)}</span>
-          </div>
-
-          <div className="flex items-center gap-1">
-            <span
-              className={`rounded-full px-3 py-1 uppercase tracking-wide ${
-                type === "Oficial"
-                  ? "bg-blue-200 text-blue-900"
-                  : type === "Semi-Oficial"
-                  ? "bg-yellow-200 text-yellow-900"
-                  : "bg-gray-300 text-gray-700"
-              }`}
-            >
-              {type}
-            </span>
           </div>
         </div>
       </div>
     </header>
   )
 }
+
+
+
 
 

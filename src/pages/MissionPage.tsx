@@ -2,7 +2,8 @@ import { useState } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 
 import CreateTeamsModal from "../components/CreateTeamsModal"
-import AddMemberModal, { type Member } from "../components/AddMemberModal"
+import AddMemberModal from "../components/AddMemberModal"
+import type { Member } from "../constants/rpg.data"
 import MemberCard from "../components/MemberCard"
 import { FaChevronRight, FaPlus } from "react-icons/fa"
 import MissionHeader from "../components/MissionHeader"
@@ -135,16 +136,15 @@ export default function MissionPage({ sheets }: Props) {
       ) : (
         <>
           {/* Linha com botão de rodada + chevron */}
-          <div className="relative mb-6 h-[48px] flex items-center justify-center">
-            {/* Botão Nova Rodada - centralizado */}
+          <div className="relative mt-8 mb-6 flex flex-col items-center">
             <button
               onClick={handleNewRound}
               disabled={team1Members.length === 0 || team2Members.length === 0}
-              className={`px-6 py-3 rounded-lg text-lg transition flex items-center gap-2
+              className={`px-4 sm:px-6 py-2 sm:py-3 rounded-full text-sm sm:text-base transition flex items-center gap-2 shadow
                 ${
                   team1Members.length === 0 || team2Members.length === 0
                     ? "bg-green-200 text-green-400 cursor-not-allowed"
-                    : "bg-green-400 text-white hover:bg-green-500 cursor-pointer"
+                    : "bg-green-500 text-white hover:bg-green-600 cursor-pointer"
                 }
               `}
             >
@@ -152,15 +152,15 @@ export default function MissionPage({ sheets }: Props) {
               Nova Rodada
             </button>
 
-            {/* Botão Chevron - canto direito absoluto */}
             <button
               onClick={() => navigate(`/missao/${id}/rodada`)}
-              className="absolute right-4 text-red-500 hover:text-red-700 transition cursor-pointer"
+              className="absolute right-4 top-1 sm:top-0 text-red-500 hover:text-red-700 transition"
               title="Ver rodadas"
             >
-              <FaChevronRight size={32} />
+              <FaChevronRight size={28} />
             </button>
           </div>
+
 
           <main className="w-full flex flex-col sm:flex-row gap-4">
             {/* Equipe 1 */}
@@ -240,7 +240,6 @@ export default function MissionPage({ sheets }: Props) {
       )}
     </div>
   )
-
 }
 
 
