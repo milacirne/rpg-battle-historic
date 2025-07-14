@@ -12,16 +12,16 @@ type SpecializationCategoryInputProps = {
       knowledge: Record<string, number>
       driving: Record<string, number>
       crafts: Record<string, number>
+      sports: Record<string, number>
     }>
   >
   newSpecializationInput: string
   setNewSpecializationInput: React.Dispatch<React.SetStateAction<Record<SpecializationCategory, string>>>
   teamColor: string
-  accordionState: AccordionState // Usando o tipo AccordionState
-  setAccordionState: React.Dispatch<React.SetStateAction<AccordionState>> // Usando o tipo AccordionState
+  accordionState: AccordionState
+  setAccordionState: React.Dispatch<React.SetStateAction<AccordionState>>
 }
 
-// Função para obter exemplos de placeholder por categoria
 function getPlaceholderExample(category: SpecializationCategory): string {
   const examples = {
     languages: "Inglês, Francês, Japonês",
@@ -29,6 +29,7 @@ function getPlaceholderExample(category: SpecializationCategory): string {
     knowledge: "História, Medicina, Astronomia",
     driving: "Carro, Moto, Caminhão",
     crafts: "Marcenaria, Culinária, Costura",
+    sports: "Futebol, Basquete, Handebol"
   }
   return examples[category]
 }
@@ -46,7 +47,6 @@ export function SpecializationCategoryInput({
   const categorySkills = Object.keys(specialization[category])
   const categoryName = specializationCategories[category]
 
-  // Função para adicionar nova especialização em uma categoria específica
   function handleAddSpecialization() {
     const inputValue = newSpecializationInput
     if (!inputValue.trim()) return
@@ -68,7 +68,6 @@ export function SpecializationCategoryInput({
     }))
   }
 
-  // Função para remover especialização de uma categoria específica
   function handleRemoveSpecialization(skillName: string) {
     setSpecialization((prev) => {
       const newCategorySkills = { ...prev[category] }
