@@ -81,6 +81,7 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
   const [accordion, setAccordion] = useState<AccordionState>({
     powers: false,
     styles: false,
+    pericias: false,
     combat: false,
     social: false,
     utility: false,
@@ -172,12 +173,40 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!name.trim()) return alert("Preencha o nome")
-    if (type === "semideus" && !divineParent.trim()) return alert("Preencha a filiação divina")
+    if (!name.trim()) {
+      alert("Preencha o nome do membro.")
+      return
+    }
+    if (type === "semideus" && !divineParent.trim()) {
+      alert("Preencha a filiação divina para semideuses.")
+      return
+    }
+
+    // Mapeamento de nomes de atributos para português
+    const attributeNameMap: Record<string, string> = {
+      force: "Força",
+      determination: "Determinação",
+      agility: "Agilidade",
+      wisdom: "Sabedoria",
+      perception: "Percepção",
+      dexterity: "Destreza",
+      vigor: "Vigor",
+      charisma: "Carisma",
+    }
+
+    // Validação dos atributos
+    const attributes = { force, determination, agility, wisdom, perception, dexterity, vigor, charisma }
+    const missingAttributes = Object.entries(attributes).filter(([, value]) => value === 0)
+
+    if (missingAttributes.length > 0) {
+      const missingNames = missingAttributes
+        .map(([name]) => attributeNameMap[name] || name) // Usa o mapa ou o nome original se não encontrar
+        .join(", ")
+      alert(`Por favor, preencha todos os atributos. Atributos faltando: ${missingNames}.`)
+      return
+    }
 
     // Calcula os efeitos globais para salvar.
-    // calculateFinalSkills agora retorna os baseSkills (que são os estados atuais)
-    // e os globalEffects que serão salvos no membro.
     const { globalEffects } = calculateFinalSkills(
       combat,
       social,
@@ -203,7 +232,6 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
       powers,
       styles,
       baseSkills: {
-        // Salva os valores base das perícias
         combat,
         social,
         utility,
@@ -212,7 +240,7 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
       },
       peculiarities: selectedPeculiarities,
       trejeitos: selectedTrejeitos,
-      derivedGlobalSkillEffects: globalEffects, // Salva os efeitos globais derivados
+      derivedGlobalSkillEffects: globalEffects,
     }
 
     if (type === "semideus") memberToSave.divineParent = divineParent.trim()
@@ -310,75 +338,87 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
         <SkillCategoryInput skills={allStyles} values={styles} setValues={setStyles} teamColor={teamColor} />
       </AccordionSection>
 
-      {/* Accordion - Perícias */}
+      {/* Accordion principal de Perícias */}
       <AccordionSection
-        title="Perícias de Combate"
-        open={accordion.combat}
-        onToggle={() => setAccordion((prev: AccordionState) => ({ ...prev, combat: !prev.combat }))}
-      >
-        <SkillCategoryInput skills={combatSkills} values={combat} setValues={setCombat} teamColor={teamColor} />
-      </AccordionSection>
-
-      <AccordionSection
-        title="Perícias Sociais"
-        open={accordion.social}
-        onToggle={() => setAccordion((prev: AccordionState) => ({ ...prev, social: !prev.social }))}
-      >
-        <SkillCategoryInput skills={socialSkills} values={social} setValues={setSocial} teamColor={teamColor} />
-      </AccordionSection>
-
-      <AccordionSection
-        title="Perícias de Utilidade"
-        open={accordion.utility}
-        onToggle={() => setAccordion((prev: AccordionState) => ({ ...prev, utility: !prev.utility }))}
-      >
-        <SkillCategoryInput skills={utilitySkills} values={utility} setValues={setUtility} teamColor={teamColor} />
-      </AccordionSection>
-
-      <AccordionSection
-        title="Perícias Complementares"
-        open={accordion.complementary}
-        onToggle={() => setAccordion((prev: AccordionState) => ({ ...prev, complementary: !prev.complementary }))}
-      >
-        <SkillCategoryInput
-          skills={complementarySkills}
-          values={complementary}
-          setValues={setComplementary}
-          teamColor={teamColor}
-        />
-      </AccordionSection>
-
-      {/* Accordion - Perícias de Especialização */}
-      <AccordionSection
-        title="Perícias de Especialização"
-        open={accordion.specialization}
-        onToggle={() => setAccordion((prev: AccordionState) => ({ ...prev, specialization: !prev.specialization }))}
+        title="Perícias"
+        open={accordion.pericias}
+        onToggle={() => setAccordion((prev: AccordionState) => ({ ...prev, pericias: !prev.pericias }))}
       >
         <div className="space-y-4">
-          {(Object.keys(specializationCategories) as SpecializationCategory[]).map((category) => (
-            <SpecializationCategoryInput
-              key={category}
-              category={category}
-              specialization={specialization}
-              setSpecialization={setSpecialization}
-              newSpecializationInput={newSpecializationInputs[category]}
-              setNewSpecializationInput={setNewSpecializationInputs}
+          {/* Perícias de Combate */}
+          <AccordionSection
+            title="Perícias de Combate"
+            open={accordion.combat}
+            onToggle={() => setAccordion((prev: AccordionState) => ({ ...prev, combat: !prev.combat }))}
+          >
+            <SkillCategoryInput skills={combatSkills} values={combat} setValues={setCombat} teamColor={teamColor} />
+          </AccordionSection>
+
+          {/* Perícias Sociais */}
+          <AccordionSection
+            title="Perícias Sociais"
+            open={accordion.social}
+            onToggle={() => setAccordion((prev: AccordionState) => ({ ...prev, social: !prev.social }))}
+          >
+            <SkillCategoryInput skills={socialSkills} values={social} setValues={setSocial} teamColor={teamColor} />
+          </AccordionSection>
+
+          {/* Perícias de Utilidade */}
+          <AccordionSection
+            title="Perícias de Utilidade"
+            open={accordion.utility}
+            onToggle={() => setAccordion((prev: AccordionState) => ({ ...prev, utility: !prev.utility }))}
+          >
+            <SkillCategoryInput skills={utilitySkills} values={utility} setValues={setUtility} teamColor={teamColor} />
+          </AccordionSection>
+
+          {/* Perícias Complementares */}
+          <AccordionSection
+            title="Perícias Complementares"
+            open={accordion.complementary}
+            onToggle={() => setAccordion((prev: AccordionState) => ({ ...prev, complementary: !prev.complementary }))}
+          >
+            <SkillCategoryInput
+              skills={complementarySkills}
+              values={complementary}
+              setValues={setComplementary}
               teamColor={teamColor}
-              accordionState={accordion}
-              setAccordionState={setAccordion}
             />
-          ))}
+          </AccordionSection>
+
+          {/* Perícias de Especialização */}
+          <AccordionSection
+            title="Perícias de Especialização"
+            open={accordion.specialization}
+            onToggle={() => setAccordion((prev: AccordionState) => ({ ...prev, specialization: !prev.specialization }))}
+          >
+            <div className="space-y-4">
+              {(Object.keys(specializationCategories) as SpecializationCategory[]).map((category) => (
+                <SpecializationCategoryInput
+                  key={category}
+                  category={category}
+                  specialization={specialization}
+                  setSpecialization={setSpecialization}
+                  newSpecializationInput={newSpecializationInputs[category]}
+                  setNewSpecializationInput={setNewSpecializationInputs}
+                  teamColor={teamColor}
+                  accordionState={accordion}
+                  setAccordionState={setAccordion}
+                />
+              ))}
+            </div>
+          </AccordionSection>
         </div>
       </AccordionSection>
 
-      {/* NOVO: Accordion - Vantagens */}
+      {/* Accordion - Vantagens */}
       <AccordionSection
         title="Vantagens"
         open={accordion.advantages}
         onToggle={() => setAccordion((prev: AccordionState) => ({ ...prev, advantages: !prev.advantages }))}
       >
         <div className="space-y-4">
-          {/* NOVO: Nested Accordion - Peculiaridades */}
+          {/* Nested Accordion - Peculiaridades */}
           <AccordionSection
             title="Peculiaridades"
             open={accordion.peculiarities}
@@ -396,14 +436,14 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
         </div>
       </AccordionSection>
 
-      {/* NOVO: Accordion - Desvantagens */}
+      {/* Accordion - Desvantagens */}
       <AccordionSection
         title="Desvantagens"
         open={accordion.disadvantages}
         onToggle={() => setAccordion((prev: AccordionState) => ({ ...prev, disadvantages: !prev.disadvantages }))}
       >
         <div className="space-y-4">
-          {/* NOVO: Nested Accordion - Trejeitos */}
+          {/* Nested Accordion - Trejeitos */}
           <AccordionSection
             title="Trejeitos"
             open={accordion.trejeitos}
@@ -423,6 +463,8 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
     </AddMemberModalLayout>
   )
 }
+
+
 
 
 

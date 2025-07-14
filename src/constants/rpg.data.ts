@@ -105,6 +105,7 @@ export type SpecializationCategory = keyof typeof specializationCategories
 export type AccordionState = {
   powers: boolean
   styles: boolean
+  pericias: boolean // NOVO: Estado para o accordion principal de Perícias
   combat: boolean
   social: boolean
   utility: boolean
@@ -479,6 +480,7 @@ export function calculateFinalSkills(
     globalEffects,
   } // Retorna os baseSkills e os efeitos globais
 }
+
 
 
 
