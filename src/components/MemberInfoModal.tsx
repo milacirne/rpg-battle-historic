@@ -1,4 +1,10 @@
-import type { Member, PeculiarityData, TrejeitoData, GlobalSkillEffect } from "../constants/rpg.data"
+import type {
+  Member,
+  PeculiarityData,
+  TrejeitoData,
+  GlobalSkillEffect,
+  SpecializationCategory,
+} from "../constants/rpg.data"
 import {
   allPeculiarities,
   allTrejeitos,
@@ -25,7 +31,7 @@ export default function MemberInfoModal({ member, onClose }: Props) {
     let finalValue = baseValue || 0
 
     const individualEffect = derivedGlobalSkillEffects?.find(
-      (effect) => effect.type === "individual" && effect.skillName === skillName,
+      (effect) => effect.type === "individual" && effect.skillName === skillName && effect.category === category,
     )
     if (individualEffect) {
       finalValue += individualEffect.value
@@ -40,33 +46,6 @@ export default function MemberInfoModal({ member, onClose }: Props) {
     return finalValue
   }
 
-  const shouldDisplaySkill = (
-    skillName: string,
-    baseValue: number,
-    categoryKey: GlobalSkillEffect["category"],
-    globalEffects: GlobalSkillEffect[],
-  ): boolean => {
-    if (baseValue > 0) {
-      return true
-    }
-
-    const hasIndividualEffect = globalEffects.some(
-      (effect) => effect.type === "individual" && effect.skillName === skillName,
-    )
-    if (hasIndividualEffect) {
-      return true
-    }
-
-    const hasCategoryEffect = globalEffects.some(
-      (effect) => effect.type === "category" && effect.category === categoryKey,
-    )
-    if (hasCategoryEffect) {
-      return true
-    }
-
-    return false
-  }
-
   const VITALIDADE = (member.vigor + member.determination) * 25
   const ENERGIA = (member.force + member.dexterity) * 25
   const MANA = (member.wisdom + member.charisma) * 25
@@ -78,77 +57,96 @@ export default function MemberInfoModal({ member, onClose }: Props) {
   const activeCombatSkills: Record<string, number> = {}
   combatSkills.forEach((skillName) => {
     const baseValue = member.baseSkills?.combat?.[skillName] || 0
-    if (shouldDisplaySkill(skillName, baseValue, "combat", derivedGlobalSkillEffects)) {
-      activeCombatSkills[skillName] = getFinalSkillValue(skillName, baseValue, "combat")
+    const finalValue = getFinalSkillValue(skillName, baseValue, "combat")
+    const hasIndividualEffect = derivedGlobalSkillEffects.some(
+      (effect) => effect.type === "individual" && effect.skillName === skillName && effect.category === "combat",
+    )
+    if (baseValue > 0 || hasIndividualEffect) {
+      activeCombatSkills[skillName] = finalValue
     }
   })
 
   const activeSocialSkills: Record<string, number> = {}
   socialSkills.forEach((skillName) => {
     const baseValue = member.baseSkills?.social?.[skillName] || 0
-    if (shouldDisplaySkill(skillName, baseValue, "social", derivedGlobalSkillEffects)) {
-      activeSocialSkills[skillName] = getFinalSkillValue(skillName, baseValue, "social")
+    const finalValue = getFinalSkillValue(skillName, baseValue, "social")
+    const hasIndividualEffect = derivedGlobalSkillEffects.some(
+      (effect) => effect.type === "individual" && effect.skillName === skillName && effect.category === "social",
+    )
+    if (baseValue > 0 || hasIndividualEffect) {
+      activeSocialSkills[skillName] = finalValue
     }
   })
 
   const activeUtilitySkills: Record<string, number> = {}
   utilitySkills.forEach((skillName) => {
     const baseValue = member.baseSkills?.utility?.[skillName] || 0
-    if (shouldDisplaySkill(skillName, baseValue, "utility", derivedGlobalSkillEffects)) {
-      activeUtilitySkills[skillName] = getFinalSkillValue(skillName, baseValue, "utility")
+    const finalValue = getFinalSkillValue(skillName, baseValue, "utility")
+    const hasIndividualEffect = derivedGlobalSkillEffects.some(
+      (effect) => effect.type === "individual" && effect.skillName === skillName && effect.category === "utility",
+    )
+    if (baseValue > 0 || hasIndividualEffect) {
+      activeUtilitySkills[skillName] = finalValue
     }
   })
 
   const activeComplementarySkills: Record<string, number> = {}
   complementarySkills.forEach((skillName) => {
     const baseValue = member.baseSkills?.complementary?.[skillName] || 0
-    if (shouldDisplaySkill(skillName, baseValue, "complementary", derivedGlobalSkillEffects)) {
-      activeComplementarySkills[skillName] = getFinalSkillValue(skillName, baseValue, "complementary")
+    const finalValue = getFinalSkillValue(skillName, baseValue, "complementary")
+    const hasIndividualEffect = derivedGlobalSkillEffects.some(
+      (effect) => effect.type === "individual" && effect.skillName === skillName && effect.category === "complementary",
+    )
+    if (baseValue > 0 || hasIndividualEffect) {
+      activeComplementarySkills[skillName] = finalValue
     }
   })
 
-  const activeSpecializations = {
-    languages: Object.fromEntries(
-      Object.entries(member.baseSkills?.specialization?.languages || {})
-        .filter(([skillName, baseValue]) =>
-          shouldDisplaySkill(skillName, baseValue, "languages", derivedGlobalSkillEffects),
-        )
-        .map(([skillName, baseValue]) => [skillName, getFinalSkillValue(skillName, baseValue, "languages")]),
-    ),
-    arts: Object.fromEntries(
-      Object.entries(member.baseSkills?.specialization?.arts || {})
-        .filter(([skillName, baseValue]) => shouldDisplaySkill(skillName, baseValue, "arts", derivedGlobalSkillEffects))
-        .map(([skillName, baseValue]) => [skillName, getFinalSkillValue(skillName, baseValue, "arts")]),
-    ),
-    knowledge: Object.fromEntries(
-      Object.entries(member.baseSkills?.specialization?.knowledge || {})
-        .filter(([skillName, baseValue]) =>
-          shouldDisplaySkill(skillName, baseValue, "knowledge", derivedGlobalSkillEffects),
-        )
-        .map(([skillName, baseValue]) => [skillName, getFinalSkillValue(skillName, baseValue, "knowledge")]),
-    ),
-    driving: Object.fromEntries(
-      Object.entries(member.baseSkills?.specialization?.driving || {})
-        .filter(([skillName, baseValue]) =>
-          shouldDisplaySkill(skillName, baseValue, "driving", derivedGlobalSkillEffects),
-        )
-        .map(([skillName, baseValue]) => [skillName, getFinalSkillValue(skillName, baseValue, "driving")]),
-    ),
-    crafts: Object.fromEntries(
-      Object.entries(member.baseSkills?.specialization?.crafts || {})
-        .filter(([skillName, baseValue]) =>
-          shouldDisplaySkill(skillName, baseValue, "crafts", derivedGlobalSkillEffects),
-        )
-        .map(([skillName, baseValue]) => [skillName, getFinalSkillValue(skillName, baseValue, "crafts")]),
-    ),
-    sports: Object.fromEntries(
-      Object.entries(member.baseSkills?.specialization?.sports || {})
-        .filter(([skillName, baseValue]) =>
-          shouldDisplaySkill(skillName, baseValue, "sports", derivedGlobalSkillEffects),
-        )
-        .map(([skillName, baseValue]) => [skillName, getFinalSkillValue(skillName, baseValue, "sports")]),
-    ),
+  const activeSpecializations: Record<SpecializationCategory, Record<string, number>> = {
+    languages: {},
+    arts: {},
+    knowledge: {},
+    driving: {},
+    crafts: {},
+    sports: {},
   }
+
+  const processSpecializationCategory = (categoryKey: SpecializationCategory) => {
+    const baseSkillsForCategory = member.baseSkills?.specialization?.[categoryKey] || {}
+    const skillsToProcess: Record<string, number> = { ...baseSkillsForCategory }
+
+    derivedGlobalSkillEffects.forEach((effect) => {
+      if (effect.type === "individual" && effect.category === categoryKey) {
+
+        if (skillsToProcess[effect.skillName] === undefined) {
+          skillsToProcess[effect.skillName] = 0
+        }
+      }
+    })
+
+    for (const skillName in skillsToProcess) {
+      const baseValue = baseSkillsForCategory[skillName] || 0
+      const finalValue = getFinalSkillValue(skillName, baseValue, categoryKey)
+
+      const hasIndividualEffectOnThisSkill = derivedGlobalSkillEffects.some(
+        (effect) => effect.type === "individual" && effect.skillName === skillName && effect.category === categoryKey,
+      )
+
+      if (finalValue > 0 || hasIndividualEffectOnThisSkill) {
+        activeSpecializations[categoryKey][skillName] = finalValue
+      }
+    }
+
+    const categoryGlobalEffect = derivedGlobalSkillEffects?.find(
+      (effect) => effect.type === "category" && effect.category === categoryKey,
+    )
+
+    if (categoryGlobalEffect) {
+      activeSpecializations[categoryKey][`Todos`] = categoryGlobalEffect.value
+    }
+  }
+
+  ;(Object.keys(specializationCategories) as SpecializationCategory[]).forEach(processSpecializationCategory)
 
   function renderSection(title: string, items: Record<string, number>, emptyMessage: string) {
     const itemsToDisplay = Object.entries(items)
@@ -331,52 +329,32 @@ export default function MemberInfoModal({ member, onClose }: Props) {
           {/* Especializações */}
           <div className="space-y-4">
             <h4 className="font-semibold text-gray-800">Especializações</h4>
-            {Object.entries(activeSpecializations).map(([category, skills]) => {
-              const categoryName = specializationCategories[category as keyof typeof specializationCategories]
-              const hasSkills = Object.keys(skills).length > 0
+            {(Object.keys(specializationCategories) as SpecializationCategory[]).map((categoryKey) => {
+              const skillsToDisplay = activeSpecializations[categoryKey]
+              const hasSkills = Object.keys(skillsToDisplay).length > 0
 
-              const categoryGlobalEffects =
-                derivedGlobalSkillEffects?.filter((effect) => effect.category === category) || []
-
-              if (!hasSkills && categoryGlobalEffects.length === 0) return null
+              if (!hasSkills) return null
 
               return (
-                <div key={category} className="bg-gray-50 rounded-lg p-4">
-                  <h5 className="font-medium text-gray-700 mb-2">{categoryName}</h5>
+                <div key={categoryKey} className="bg-gray-50 rounded-lg p-4">
+                  <h5 className="font-medium text-gray-700 mb-2">{specializationCategories[categoryKey]}</h5>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {Object.entries(skills).map(([name, value]) => (
+                    {Object.entries(skillsToDisplay).map(([name, value]) => (
                       <div key={name} className="flex justify-between items-center bg-white rounded px-3 py-2 text-sm">
                         <span className="text-gray-700">{name}</span>
                         <span className="font-bold text-gray-900">{value}</span>
-                      </div>
-                    ))}
-                    {/* Exibe os efeitos globais para esta categoria */}
-                    {categoryGlobalEffects.map((effect) => (
-                      <div
-                        key={effect.skillName}
-                        className="flex justify-between items-center bg-white rounded px-3 py-2 text-sm italic text-gray-600"
-                      >
-                        <span>{effect.skillName} (Todos)</span>
-                        <span className="font-bold">
-                          {effect.value > 0 ? "+" : ""}
-                          {effect.value}
-                        </span>
                       </div>
                     ))}
                   </div>
                 </div>
               )
             })}
-            {/* Mensagem de "Nenhuma especialização adquirida" se não houver nenhuma skill nem efeito global em especializações */}
-            {Object.values(activeSpecializations).every((skills) => Object.keys(skills).length === 0) &&
-              (derivedGlobalSkillEffects?.length === 0 ||
-                !derivedGlobalSkillEffects?.some((e) =>
-                  Object.keys(specializationCategories).includes(e.category),
-                )) && (
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <p className="text-gray-500 text-sm italic">Nenhuma especialização adquirida</p>
-                </div>
-              )}
+            {/* Mensagem de "Nenhuma especialização adquirida" se não houver nenhuma skill em nenhuma categoria */}
+            {Object.values(activeSpecializations).every((skills) => Object.keys(skills).length === 0) && (
+              <div className="bg-gray-50 rounded-lg p-4">
+                <p className="text-gray-500 text-sm italic">Nenhuma especialização adquirida</p>
+              </div>
+            )}
           </div>
 
           {/* Peculiaridades */}
@@ -409,6 +387,12 @@ export default function MemberInfoModal({ member, onClose }: Props) {
     </div>
   )
 }
+
+
+
+
+
+
 
 
 

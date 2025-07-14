@@ -1,5 +1,5 @@
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { AttributeInput } from "./AddMemberModal-components/AttributeInput"
 import { AccordionSection } from "./AddMemberModal-components/AccordionSection"
 import { SkillCategoryInput } from "./AddMemberModal-components/SkillCategoryInput"
@@ -20,6 +20,7 @@ import {
   allPeculiarities,
   allTrejeitos,
   calculateFinalSkills,
+  allDivineParents,
 } from "../constants/rpg.data"
 
 type Props = {
@@ -34,6 +35,7 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
   const [name, setName] = useState("")
   const [type, setType] = useState<"semideus" | "humano" | "monstro">("semideus")
   const [divineParent, setDivineParent] = useState("")
+  const [divineParentUserSpecializations, setDivineParentUserSpecializations] = useState<Record<string, string>>({})
   const [force, setForce] = useState(0)
   const [determination, setDetermination] = useState(0)
   const [agility, setAgility] = useState(0)
@@ -104,6 +106,7 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
       setName(editingMember.name)
       setType(editingMember.type)
       setDivineParent(editingMember.divineParent || "")
+      setDivineParentUserSpecializations(editingMember.divineParentUserSpecializations || {})
       setForce(editingMember.force)
       setDetermination(editingMember.determination)
       setAgility(editingMember.agility)
@@ -114,7 +117,6 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
       setCharisma(editingMember.charisma)
       setPowers(editingMember.powers || {})
       setStyles(editingMember.styles || {})
-      // Carrega os baseSkills para os estados internos
       setCombat(editingMember.baseSkills?.combat || {})
       setSocial(editingMember.baseSkills?.social || {})
       setUtility(editingMember.baseSkills?.utility || {})
@@ -132,10 +134,10 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
       setSelectedPeculiarities(editingMember.peculiarities || [])
       setSelectedTrejeitos(editingMember.trejeitos || [])
     } else {
-      // Resetar tudo
       setName("")
       setType("semideus")
       setDivineParent("")
+      setDivineParentUserSpecializations({})
       setForce(0)
       setDetermination(0)
       setAgility(0)
@@ -171,18 +173,30 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
     })
   }, [editingMember])
 
+  const divineParentEffectsRequiringInput = useMemo(() => {
+    if (type !== "semideus" || !divineParent) return []
+    const selectedParent = allDivineParents.find((dp) => dp.name === divineParent)
+    return selectedParent?.effects.filter((effect) => effect.requiresUserInput) || []
+  }, [type, divineParent])
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!name.trim()) {
       alert("Preencha o nome do membro.")
       return
     }
-    if (type === "semideus" && !divineParent.trim()) {
-      alert("Preencha a filiação divina para semideuses.")
+    if (type === "semideus" && !divineParent) {
+      alert("Selecione a filiação divina para semideuses.")
       return
     }
 
-    // Mapeamento de nomes de atributos para português
+    for (const effect of divineParentEffectsRequiringInput) {
+      if (!divineParentUserSpecializations[effect.skillName]?.trim()) {
+        alert(`Por favor, especifique a perícia para "${effect.skillName}" da sua filiação divina.`)
+        return
+      }
+    }
+
     const attributeNameMap: Record<string, string> = {
       force: "Força",
       determination: "Determinação",
@@ -194,19 +208,15 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
       charisma: "Carisma",
     }
 
-    // Validação dos atributos
     const attributes = { force, determination, agility, wisdom, perception, dexterity, vigor, charisma }
     const missingAttributes = Object.entries(attributes).filter(([, value]) => value === 0)
 
     if (missingAttributes.length > 0) {
-      const missingNames = missingAttributes
-        .map(([name]) => attributeNameMap[name] || name) // Usa o mapa ou o nome original se não encontrar
-        .join(", ")
+      const missingNames = missingAttributes.map(([name]) => attributeNameMap[name] || name).join(", ")
       alert(`Por favor, preencha todos os atributos. Atributos faltando: ${missingNames}.`)
       return
     }
 
-    // Calcula os efeitos globais para salvar.
     const { globalEffects } = calculateFinalSkills(
       combat,
       social,
@@ -215,6 +225,8 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
       specialization,
       selectedPeculiarities,
       selectedTrejeitos,
+      divineParent,
+      divineParentUserSpecializations,
     )
 
     const memberToSave: Member = {
@@ -241,6 +253,7 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
       peculiarities: selectedPeculiarities,
       trejeitos: selectedTrejeitos,
       derivedGlobalSkillEffects: globalEffects,
+      divineParentUserSpecializations: divineParentUserSpecializations,
     }
 
     if (type === "semideus") memberToSave.divineParent = divineParent.trim()
@@ -282,14 +295,55 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
       </div>
 
       {type === "semideus" && (
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">Filiação divina</label>
-          <input
-            value={divineParent}
-            onChange={(e) => setDivineParent(e.target.value)}
-            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-            required={type === "semideus"}
-          />
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Filiação divina</label>
+            <select
+              value={divineParent}
+              onChange={(e) => {
+                setDivineParent(e.target.value)
+                setDivineParentUserSpecializations({})
+              }}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              required={type === "semideus"}
+            >
+              <option value="">Selecionar</option>
+              {allDivineParents.map((dp) => (
+                <option key={dp.name} value={dp.name}>
+                  {dp.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Campos para especializações de filiação divina */}
+          {divineParentEffectsRequiringInput.length > 0 && (
+            <div className="bg-gray-50 rounded-xl p-4">
+              <h4 className="text-lg font-semibold text-gray-800 mb-4">Especializações da Filiação Divina</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {divineParentEffectsRequiringInput.map((effect) => (
+                  <div key={effect.skillName}>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      {effect.skillName}:
+                    </label>
+                    <input
+                      type="text"
+                      value={divineParentUserSpecializations[effect.skillName] || ""}
+                      onChange={(e) =>
+                        setDivineParentUserSpecializations((prev) => ({
+                          ...prev,
+                          [effect.skillName]: e.target.value,
+                        }))
+                      }
+                      placeholder={effect.userInputPlaceholder}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      required
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

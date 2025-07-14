@@ -1,8 +1,7 @@
 import { useState } from "react"
 import MemberInfoModal from "./MemberInfoModal"
 import StatBar from "./StatBar"
-import type { Member } from "../constants/rpg.data"
-
+import { allDivineParents, type Member } from "../constants/rpg.data"
 
 type MemberCardProps = {
   member: Member
@@ -18,8 +17,23 @@ export default function MemberCard({ member, onEdit, onDelete }: MemberCardProps
   const MANA = (member.wisdom + member.charisma) * 25
   const iniciativaBase = member.agility + member.perception
 
-  const emblem =
-    member.type === "semideus" ? member.divineParent || "Sem Filiação" : member.type === "humano" ? "Humano" : "Monstro"
+  let emblemText: string
+  let emblemClass: string
+
+  if (member.type === "semideus" && member.divineParent) {
+    const divineParentData = allDivineParents.find((dp) => dp.name === member.divineParent)
+    emblemText = divineParentData?.name || member.divineParent
+    emblemClass = divineParentData?.tagClass || "bg-indigo-100 text-indigo-700"
+  } else if (member.type === "humano") {
+    emblemText = "Humano"
+    emblemClass = "bg-gray-100 text-gray-700"
+  } else if (member.type === "monstro") {
+    emblemText = "Monstro"
+    emblemClass = "bg-red-100 text-red-700"
+  } else {
+    emblemText = "Desconhecido"
+    emblemClass = "bg-gray-100 text-gray-700"
+  }
 
   return (
     <>
@@ -27,7 +41,8 @@ export default function MemberCard({ member, onEdit, onDelete }: MemberCardProps
         {/* Header: Nome + Emblema */}
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-base font-semibold text-gray-900 truncate max-w-[11rem]">{member.name}</h3>
-          <span className="text-xs font-medium text-indigo-700 bg-indigo-100 px-3 py-0.5 rounded-full">{emblem}</span>
+          {/* Aplica a classe dinâmica para a tag */}
+          <span className={`text-xs font-medium px-3 py-0.5 rounded-full ${emblemClass}`}>{emblemText}</span>
         </div>
 
         {/* Stats */}
@@ -80,6 +95,7 @@ export default function MemberCard({ member, onEdit, onDelete }: MemberCardProps
     </>
   )
 }
+
 
 
 
