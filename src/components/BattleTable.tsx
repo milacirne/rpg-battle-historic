@@ -124,7 +124,10 @@ export default function BattleTable({ sheets, onDeleteMission, onEditMission }: 
                 </th>
               )
             })}
-            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider" colSpan={2} />
+            <th
+              className="px-4 py-4 sm:px-6 text-left text-xs font-bold text-gray-700 uppercase tracking-wider"
+              colSpan={2}
+            />
           </tr>
         </thead>
         <tbody>
@@ -136,17 +139,14 @@ export default function BattleTable({ sheets, onDeleteMission, onEditMission }: 
             </tr>
           ) : (
             sortedSheets.map((sheet) => (
-              <tr
-                key={sheet.id}
-                className="hover:bg-gray-100 transition-colors duration-150"
-              >
+              <tr key={sheet.id} className="hover:bg-gray-100 transition-colors duration-150">
                 <td
                   onClick={() => navigate(`/missao/${sheet.id}`)}
-                  className="px-6 py-5 font-medium text-gray-800 truncate cursor-pointer"
+                  className="px-4 py-5 sm:px-6 font-medium text-gray-800 truncate cursor-pointer"
                 >
                   {sheet.name}
                 </td>
-                <td onClick={() => navigate(`/missao/${sheet.id}`)} className="px-6 py-5 cursor-pointer">
+                <td onClick={() => navigate(`/missao/${sheet.id}`)} className="px-4 py-5 sm:px-6 cursor-pointer">
                   <span
                     className={`inline-block px-3 py-1.5 rounded-full text-sm font-semibold shadow-sm ${
                       sheet.type === "Oficial"
@@ -161,37 +161,39 @@ export default function BattleTable({ sheets, onDeleteMission, onEditMission }: 
                 </td>
                 <td
                   onClick={() => navigate(`/missao/${sheet.id}`)}
-                  className="px-6 py-5 whitespace-nowrap text-gray-600 cursor-pointer"
+                  className="px-4 py-5 sm:px-6 whitespace-nowrap text-gray-600 cursor-pointer"
                 >
                   {formatDate(sheet.createdAt)}
                 </td>
                 <td
                   onClick={() => navigate(`/missao/${sheet.id}`)}
-                  className="px-6 py-5 truncate text-gray-600 cursor-pointer"
+                  className="px-4 py-5 sm:px-6 truncate text-gray-600 cursor-pointer"
                 >
                   {sheet.location}
                 </td>
-                <td className="px-6 py-5 text-right">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onEditMission(sheet)
-                    }}
-                    className="text-blue-500 hover:text-blue-700 p-2 rounded-full hover:bg-blue-100 transition-colors duration-200 cursor-pointer mr-2"
-                    title="Editar Missão"
-                  >
-                    <FaEdit className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onDeleteMission(sheet.id)
-                    }}
-                    className="text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-100 transition-colors duration-200 cursor-pointer"
-                    title="Deletar Missão"
-                  >
-                    <FaTrash className="w-4 h-4" />
-                  </button>
+                <td className="px-4 py-5 sm:px-6 text-right">
+                  <div className="flex justify-end gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onEditMission(sheet)
+                      }}
+                      className="text-blue-500 hover:text-blue-700 p-2 rounded-full hover:bg-blue-100 transition-colors duration-200 cursor-pointer"
+                      title="Editar Missão"
+                    >
+                      <FaEdit className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onDeleteMission(sheet.id)
+                      }}
+                      className="text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-100 transition-colors duration-200 cursor-pointer"
+                      title="Deletar Missão"
+                    >
+                      <FaTrash className="w-4 h-4" />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))
@@ -201,6 +203,7 @@ export default function BattleTable({ sheets, onDeleteMission, onEditMission }: 
     </div>
   )
 }
+
 
 
 

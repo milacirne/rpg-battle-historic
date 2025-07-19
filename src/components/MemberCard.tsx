@@ -49,7 +49,7 @@ export default function MemberCard({ member, onEdit, onDelete }: MemberCardProps
         {/* Stats */}
         <div className="space-y-2 mb-4">
           <StatBar label="Vitalidade" value={VITALIDADE} max={VITALIDADE} color="green" small />
-          <StatBar label="Energia" value={ENERGIA} max={ENERGIA} color="red" small />
+          <StatBar label="Energia" value={ENERGIA} max={ENERGIA} color="yellow" small />
           <StatBar label="Mana" value={MANA} max={MANA} color="blue" small />
           <div className="text-xs text-gray-600 font-medium">
             Iniciativa: <span className="text-indigo-700 font-semibold">{iniciativaBase}</span>
@@ -76,7 +76,7 @@ export default function MemberCard({ member, onEdit, onDelete }: MemberCardProps
           </button>
           <button
             onClick={() => onEdit(member)}
-            className="px-3 py-1.5 bg-yellow-400 text-white text-xs rounded hover:bg-yellow-500 transition cursor-pointer flex items-center gap-1"
+            className="px-3 py-1.5 bg-green-400 text-white text-xs rounded hover:bg-green-500 transition cursor-pointer flex items-center gap-1"
             aria-label={`Editar ${member.name}`}
           >
             <FaEdit className="w-3 h-3" />

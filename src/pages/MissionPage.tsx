@@ -167,10 +167,10 @@ export default function MissionPage({ sheets }: Props) {
                 className="mb-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition cursor-pointer flex items-center gap-2"
               >
                 <FaPlus />
-                Adicionar Membro
+                Adicionar personagem
               </button>
               {team1Members.length === 0 ? (
-                <p className="text-gray-500">Nenhum membro adicionado.</p>
+                <p className="text-gray-500">Nenhum personagem adicionado.</p>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {team1Members.map((member) => (
@@ -193,10 +193,10 @@ export default function MissionPage({ sheets }: Props) {
                 className="mb-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition cursor-pointer flex items-center gap-2"
               >
                 <FaPlus />
-                Adicionar Membro
+                Adicionar personagem
               </button>
               {team2Members.length === 0 ? (
-                <p className="text-gray-500">Nenhum membro adicionado.</p>
+                <p className="text-gray-500">Nenhum personagem adicionado.</p>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {team2Members.map((member) => (

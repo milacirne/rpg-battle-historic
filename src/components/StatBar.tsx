@@ -3,7 +3,7 @@ type StatBarProps = {
   value: number
   max: number
   used?: number
-  color?: "red" | "green" | "blue"
+  color?: "yellow" | "green" | "blue"
   small?: boolean
 }
 
@@ -17,7 +17,7 @@ export default function StatBar({
   const percentage = Math.min(((max - used) / max) * 100, 100)
 
   const gradientClasses = {
-    red: "bg-gradient-to-r from-red-500 via-red-600 to-red-700 shadow-red-400/50",
+    yellow: "bg-gradient-to-r from-yellow-500 via-yellow-600 to-yellow-700 shadow-yellow-400/50",
     green: "bg-gradient-to-r from-green-400 via-green-500 to-green-600 shadow-green-400/50",
     blue: "bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 shadow-blue-400/50",
   }

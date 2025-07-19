@@ -1,6 +1,11 @@
 import type React from "react"
 import { AccordionSection } from "./AccordionSection"
-import { type SpecializationCategory, specializationCategories, type AccordionState } from "./../../constants/rpg.data"
+import {
+  type SpecializationCategory,
+  specializationCategories,
+  type AccordionState,
+  capitalizeFirstLetter,
+} from "./../../constants/rpg.data"
 
 type SpecializationCategoryInputProps = {
   category: SpecializationCategory
@@ -27,12 +32,12 @@ type SpecializationCategoryInputProps = {
 
 function getPlaceholderExample(category: SpecializationCategory): string {
   const examples = {
-    languages: "Inglês, Francês, Japonês",
-    arts: "Piano, Pintura, Dança",
-    knowledge: "História, Medicina, Astronomia",
-    driving: "Carro, Moto, Caminhão",
-    crafts: "Marcenaria, Culinária, Costura",
-    sports: "Futebol, Basquete, Handebol",
+    languages: "Inglês, Francês",
+    arts: "Piano, Pintura",
+    knowledge: "História, Medicina",
+    driving: "Carros, Motos",
+    crafts: "Marcenaria, Costura",
+    sports: "Futebol, Basquete",
   }
   return examples[category]
 }
@@ -70,7 +75,7 @@ export function SpecializationCategoryInput({
     const inputValue = newSpecializationInput
     if (!inputValue.trim()) return
 
-    const trimmedName = inputValue.trim()
+    const trimmedName = capitalizeFirstLetter(inputValue.trim())
     if (specialization[category][trimmedName] !== undefined) {
       alert("Esta especialização já existe nesta categoria!")
       return
@@ -126,8 +131,8 @@ export function SpecializationCategoryInput({
                 [category]: e.target.value,
               }))
             }
-            placeholder={`Digite uma especialização em ${categoryName.toLowerCase()} (ex: ${getPlaceholderExample(category)})`}
-            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+            placeholder={`Ex: ${getPlaceholderExample(category)}`}
+            className="flex-1 min-w-0 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
             onKeyPress={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault()
@@ -138,7 +143,7 @@ export function SpecializationCategoryInput({
           <button
             type="button"
             onClick={handleAddSpecialization}
-            className="px-4 py-2 rounded-lg text-white font-medium transition-all duration-200 hover:shadow-md hover:scale-105 cursor-pointer"
+            className="w-full sm:w-auto px-4 py-2 rounded-lg text-white font-medium transition-all duration-200 hover:shadow-md hover:scale-105 cursor-pointer"
             style={{ backgroundColor: teamColor }}
           >
             Adicionar

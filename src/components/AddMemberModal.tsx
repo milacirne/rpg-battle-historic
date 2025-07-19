@@ -194,7 +194,7 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!name.trim()) {
-      alert("Preencha o nome do membro.")
+      alert("Preencha o nome do personagem.")
       return
     }
     if (type === "semideus" && !divineParent) {
@@ -278,7 +278,7 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
 
   return (
     <AddMemberModalLayout
-      title={editingMember ? "Editar membro" : "Adicionar membro"}
+      title={editingMember ? "Editar personagem" : "Adicionar personagem"}
       teamName={teamName}
       teamColor={teamColor}
       onClose={onClose}
@@ -409,7 +409,7 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
       >
         <div className="space-y-4">
           <AccordionSection
-            title="Perícias de Combate"
+            title="Combate"
             open={accordion.combat}
             onToggle={() => setAccordion((prev: AccordionState) => ({ ...prev, combat: !prev.combat }))}
           >
@@ -417,7 +417,7 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
           </AccordionSection>
 
           <AccordionSection
-            title="Perícias Sociais"
+            title="Sociais"
             open={accordion.social}
             onToggle={() => setAccordion((prev: AccordionState) => ({ ...prev, social: !prev.social }))}
           >
@@ -425,7 +425,7 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
           </AccordionSection>
 
           <AccordionSection
-            title="Perícias de Utilidade"
+            title="Utilidade"
             open={accordion.utility}
             onToggle={() => setAccordion((prev: AccordionState) => ({ ...prev, utility: !prev.utility }))}
           >
@@ -433,7 +433,7 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
           </AccordionSection>
 
           <AccordionSection
-            title="Perícias Complementares"
+            title="Complementares"
             open={accordion.complementary}
             onToggle={() => setAccordion((prev: AccordionState) => ({ ...prev, complementary: !prev.complementary }))}
           >
@@ -446,7 +446,7 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
           </AccordionSection>
 
           <AccordionSection
-            title="Perícias de Especialização"
+            title="Especialização"
             open={accordion.specialization}
             onToggle={() => setAccordion((prev: AccordionState) => ({ ...prev, specialization: !prev.specialization }))}
           >
