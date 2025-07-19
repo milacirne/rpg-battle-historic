@@ -109,7 +109,7 @@ export function SpecializationCategoryInput({
           <button
             type="button"
             onClick={handleAddSpecialization}
-            className="px-4 py-2 rounded-lg text-white font-medium transition-all duration-200 hover:shadow-md hover:scale-105"
+            className="px-4 py-2 rounded-lg text-white font-medium transition-all duration-200 hover:shadow-md hover:scale-105 cursor-pointer"
             style={{ backgroundColor: teamColor }}
           >
             Adicionar

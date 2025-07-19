@@ -2,7 +2,7 @@ export type Member = {
   id: string
   name: string
   type: "semideus" | "humano" | "monstro"
-  divineParent?: string // Agora armazenará o nome da filiação (ex: "Zeus & Júpiter")
+  divineParent?: string
   force: number
   determination: number
   agility: number
@@ -29,8 +29,10 @@ export type Member = {
   }
   peculiarities?: string[]
   trejeitos?: string[]
-  derivedGlobalSkillEffects?: GlobalSkillEffect[] // Novo campo para efeitos globais derivados
-  divineParentUserSpecializations?: Record<string, string> // NOVO: Para especializações definidas pelo usuário
+  derivedGlobalSkillEffects?: GlobalSkillEffect[]
+  divineParentUserSpecializations?: Record<string, string>
+  abilities: string[]
+  disabilities: string[]
 }
 
 export const allPowers = [
@@ -106,7 +108,7 @@ export type SpecializationCategory = keyof typeof specializationCategories
 export type AccordionState = {
   powers: boolean
   styles: boolean
-  pericias: boolean // NOVO: Estado para o accordion principal de Perícias
+  pericias: boolean
   combat: boolean
   social: boolean
   utility: boolean
@@ -122,6 +124,8 @@ export type AccordionState = {
   peculiarities: boolean
   disadvantages: boolean
   trejeitos: boolean
+  abilities: boolean
+  disabilities: boolean
 }
 
 export type SkillEffect = {
@@ -413,7 +417,7 @@ export const allDivineParents: DivineParentData[] = [
         userInputPlaceholder: "veículos aéreos",
       },
     ],
-    tagClass: "bg-blue-600 text-white",
+    tagClass: "bg-blue-300 text-white",
   },
   {
     name: "Poseidon & Netuno",
@@ -430,7 +434,7 @@ export const allDivineParents: DivineParentData[] = [
         userInputPlaceholder: "veículos aquáticos",
       },
     ],
-    tagClass: "bg-cyan-600 text-white",
+    tagClass: "bg-blue-600 text-white",
   },
   {
     name: "Hades & Plutão",
@@ -886,14 +890,35 @@ export const allDivineParents: DivineParentData[] = [
   },
 ]
 
-// Mapa auxiliar para encontrar a categoria de uma perícia
+export const abilities = [
+  { name: "Corpulento", attribute: "force", value: 2 },
+  { name: "Habilidoso", attribute: "dexterity", value: 2 },
+  { name: "Veloz", attribute: "agility", value: 2 },
+  { name: "Sadio", attribute: "vigor", value: 2 },
+  { name: "Arguto", attribute: "wisdom", value: 2 },
+  { name: "Fascinante", attribute: "charisma", value: 2 },
+  { name: "Diligente", attribute: "perception", value: 2 },
+  { name: "Resoluto", attribute: "determination", value: 2 },
+]
+
+export const disabilities = [
+  { name: "Lânguido", attribute: "force", value: -2 },
+  { name: "Ababelado", attribute: "dexterity", value: -2 },
+  { name: "Moroso", attribute: "agility", value: -2 },
+  { name: "Tênue", attribute: "vigor", value: -2 },
+  { name: "Incipiente", attribute: "wisdom", value: -2 },
+  { name: "Ignóbil", attribute: "charisma", value: -2 },
+  { name: "Desatento", attribute: "perception", value: -2 },
+  { name: "Displicente", attribute: "determination", value: -2 },
+]
+
 const skillToCategoryMap: Record<string, SpecializationCategory | "combat" | "social" | "utility" | "complementary"> =
   {}
 combatSkills.forEach((s) => (skillToCategoryMap[s] = "combat"))
 socialSkills.forEach((s) => (skillToCategoryMap[s] = "social"))
 utilitySkills.forEach((s) => (skillToCategoryMap[s] = "utility"))
 complementarySkills.forEach((s) => (skillToCategoryMap[s] = "complementary"))
-// Mapeia os nomes de exibição das categorias de especialização para suas chaves
+
 Object.entries(specializationCategories).forEach(([key, value]) => {
   skillToCategoryMap[value] = key as SpecializationCategory
 })
@@ -982,23 +1007,19 @@ export function calculateFinalSkills(
     }
   })
 
-  // NOVO: Coleta todos os efeitos da Filiação Divina
   if (selectedDivineParentName) {
     const divineParent = allDivineParents.find((dp) => dp.name === selectedDivineParentName)
     if (divineParent) {
       divineParent.effects.forEach((effect) => {
         let finalSkillName = effect.skillName
-        let effectType: GlobalSkillEffect["type"] = "individual" // Padrão para individual
+        let effectType: GlobalSkillEffect["type"] = "individual"
 
         if (effect.requiresUserInput && divineParentUserSpecializations?.[effect.skillName]?.trim()) {
           finalSkillName = divineParentUserSpecializations[effect.skillName].trim()
-          effectType = "individual" // Especialização definida pelo usuário é um efeito individual
+          effectType = "individual"
         } else if (effect.requiresUserInput && !divineParentUserSpecializations?.[effect.skillName]?.trim()) {
-          // Se requer input mas não foi fornecido, ignora este efeito
           return
         } else {
-          // Se não requer input do usuário, é um bônus para a categoria inteira (se for especialização)
-          // ou um bônus individual para perícias gerais.
           if (
             effect.category === "languages" ||
             effect.category === "arts" ||
@@ -1008,9 +1029,9 @@ export function calculateFinalSkills(
             effect.category === "sports"
           ) {
             effectType = "category"
-            finalSkillName = specializationCategories[effect.category] // Usa o nome de exibição da categoria
+            finalSkillName = specializationCategories[effect.category]
           } else {
-            effectType = "individual" // Para perícias de combate, social, utilidade, complementares
+            effectType = "individual"
           }
         }
 

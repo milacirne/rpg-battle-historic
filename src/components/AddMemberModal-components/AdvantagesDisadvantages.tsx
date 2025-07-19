@@ -1,9 +1,8 @@
 import type React from "react"
-import type { PeculiarityData, TrejeitoData } from "../../constants/rpg.data"
 
 type AdvantageDisadvantageSelectorProps = {
   label: string
-  items: (PeculiarityData | TrejeitoData)[]
+  items: { name: string }[] 
   selectedItems: string[]
   setSelectedItems: React.Dispatch<React.SetStateAction<string[]>>
   teamColor: string
@@ -35,6 +34,7 @@ export function AdvantageDisadvantageSelector({
               borderColor: selectedItems.includes(item.name) ? teamColor : "#D1D5DB",
               backgroundColor: selectedItems.includes(item.name) ? teamColor + "1A" : "white",
             }}
+            onClick={() => handleToggle(item.name)}
           >
             <span className={`font-medium ${selectedItems.includes(item.name) ? "text-gray-900" : "text-gray-700"}`}>
               {item.name}
@@ -43,7 +43,7 @@ export function AdvantageDisadvantageSelector({
               type="checkbox"
               checked={selectedItems.includes(item.name)}
               onChange={() => handleToggle(item.name)}
-              className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
               style={{ accentColor: teamColor }}
             />
           </div>

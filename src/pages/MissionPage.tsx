@@ -164,8 +164,9 @@ export default function MissionPage({ sheets }: Props) {
               <h2 className="text-xl font-bold mb-4 text-blue-700">{team1Name}</h2>
               <button
                 onClick={() => openAddMemberModal("team1")}
-                className="mb-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition cursor-pointer"
+                className="mb-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition cursor-pointer flex items-center gap-2"
               >
+                <FaPlus />
                 Adicionar Membro
               </button>
               {team1Members.length === 0 ? (
@@ -189,8 +190,9 @@ export default function MissionPage({ sheets }: Props) {
               <h2 className="text-xl font-bold mb-4 text-red-700">{team2Name}</h2>
               <button
                 onClick={() => openAddMemberModal("team2")}
-                className="mb-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition cursor-pointer"
+                className="mb-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition cursor-pointer flex items-center gap-2"
               >
+                <FaPlus />
                 Adicionar Membro
               </button>
               {team2Members.length === 0 ? (

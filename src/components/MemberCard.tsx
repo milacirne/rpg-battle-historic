@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { FaEdit, FaTrash } from "react-icons/fa"
 import MemberInfoModal from "./MemberInfoModal"
 import StatBar from "./StatBar"
 import { allDivineParents, type Member } from "../constants/rpg.data"
@@ -75,16 +76,18 @@ export default function MemberCard({ member, onEdit, onDelete }: MemberCardProps
           </button>
           <button
             onClick={() => onEdit(member)}
-            className="px-3 py-1.5 bg-yellow-400 text-white text-xs rounded hover:bg-yellow-500 transition cursor-pointer"
+            className="px-3 py-1.5 bg-yellow-400 text-white text-xs rounded hover:bg-yellow-500 transition cursor-pointer flex items-center gap-1"
             aria-label={`Editar ${member.name}`}
           >
+            <FaEdit className="w-3 h-3" />
             Editar
           </button>
           <button
             onClick={() => onDelete(member.id)}
-            className="px-3 py-1.5 bg-red-500 text-white text-xs rounded hover:bg-red-600 transition cursor-pointer"
+            className="px-3 py-1.5 bg-red-500 text-white text-xs rounded hover:bg-red-600 transition cursor-pointer flex items-center gap-1"
             aria-label={`Apagar ${member.name}`}
           >
+            <FaTrash className="w-3 h-3" />
             Apagar
           </button>
         </div>
