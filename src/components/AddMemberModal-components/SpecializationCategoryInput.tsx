@@ -1,3 +1,5 @@
+"use client"
+
 import type React from "react"
 import { AccordionSection } from "./AccordionSection"
 import { type SpecializationCategory, specializationCategories, type AccordionState } from "./../../constants/rpg.data"
@@ -20,6 +22,9 @@ type SpecializationCategoryInputProps = {
   teamColor: string
   accordionState: AccordionState
   setAccordionState: React.Dispatch<React.SetStateAction<AccordionState>>
+  conductionBonuses: Record<string, boolean>
+  setConductionBonuses: React.Dispatch<React.SetStateAction<Record<string, boolean>>>
+  divineParent: string
 }
 
 function getPlaceholderExample(category: SpecializationCategory): string {
@@ -29,9 +34,22 @@ function getPlaceholderExample(category: SpecializationCategory): string {
     knowledge: "História, Medicina, Astronomia",
     driving: "Carro, Moto, Caminhão",
     crafts: "Marcenaria, Culinária, Costura",
-    sports: "Futebol, Basquete, Handebol"
+    sports: "Futebol, Basquete, Handebol",
   }
   return examples[category]
+}
+
+function getConductionBonusType(divineParent: string): string {
+  switch (divineParent) {
+    case "Zeus & Júpiter":
+      return "Aéreo"
+    case "Poseidon & Netuno":
+      return "Aquático"
+    case "Hades & Plutão":
+      return "Terrestre"
+    default:
+      return ""
+  }
 }
 
 export function SpecializationCategoryInput({
@@ -43,6 +61,9 @@ export function SpecializationCategoryInput({
   teamColor,
   accordionState,
   setAccordionState,
+  conductionBonuses,
+  setConductionBonuses,
+  divineParent,
 }: SpecializationCategoryInputProps) {
   const categorySkills = Object.keys(specialization[category])
   const categoryName = specializationCategories[category]
@@ -77,7 +98,18 @@ export function SpecializationCategoryInput({
         [category]: newCategorySkills,
       }
     })
+    if (category === "driving") {
+      setConductionBonuses((prev) => {
+        const newBonuses = { ...prev }
+        delete newBonuses[skillName]
+        return newBonuses
+      })
+    }
   }
+
+  const showConductionBonusCheckbox =
+    category === "driving" &&
+    (divineParent === "Zeus & Júpiter" || divineParent === "Poseidon & Netuno" || divineParent === "Hades & Plutão")
 
   return (
     <AccordionSection
@@ -86,7 +118,6 @@ export function SpecializationCategoryInput({
       onToggle={() => setAccordionState((prev) => ({ ...prev, [category]: !prev[category] }))}
     >
       <div className="space-y-4">
-        {/* Input para adicionar nova especialização nesta categoria */}
         <div className="flex gap-3 p-3 bg-gray-50 rounded-lg">
           <input
             type="text"
@@ -116,7 +147,6 @@ export function SpecializationCategoryInput({
           </button>
         </div>
 
-        {/* Lista de especializações existentes nesta categoria */}
         {categorySkills.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {categorySkills.map((skill) => (
@@ -162,6 +192,26 @@ export function SpecializationCategoryInput({
                     </button>
                   ))}
                 </div>
+                {showConductionBonusCheckbox && category === "driving" && (
+                  <div className="flex items-center mt-2">
+                    <input
+                      type="checkbox"
+                      id={`conduction-bonus-${skill}`}
+                      checked={conductionBonuses[skill] || false}
+                      onChange={() =>
+                        setConductionBonuses((prev) => ({
+                          ...prev,
+                          [skill]: !prev[skill],
+                        }))
+                      }
+                      className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                      style={{ accentColor: teamColor }}
+                    />
+                    <label htmlFor={`conduction-bonus-${skill}`} className="ml-2 text-sm text-gray-700">
+                      Bônus {getConductionBonusType(divineParent)} (+2)
+                    </label>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -181,5 +231,8 @@ export function SpecializationCategoryInput({
     </AccordionSection>
   )
 }
+
+
+
 
 

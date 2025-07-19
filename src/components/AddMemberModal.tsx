@@ -1,4 +1,5 @@
 import type React from "react"
+
 import { useState, useEffect, useMemo } from "react"
 import { AttributeInput } from "./AddMemberModal-components/AttributeInput"
 import { AccordionSection } from "./AddMemberModal-components/AccordionSection"
@@ -22,7 +23,7 @@ import {
   calculateFinalSkills,
   allDivineParents,
   abilities,
-  disabilities
+  disabilities,
 } from "../constants/rpg.data"
 
 type Props = {
@@ -83,11 +84,12 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
 
   const [selectedPeculiarities, setSelectedPeculiarities] = useState<string[]>([])
   const [selectedTrejeitos, setSelectedTrejeitos] = useState<string[]>([])
+  const [conductionBonuses, setConductionBonuses] = useState<Record<string, boolean>>({})
 
   const [accordion, setAccordion] = useState<AccordionState>({
     powers: false,
     styles: false,
-    pericias: false,
+    skills: false,
     combat: false,
     social: false,
     utility: false,
@@ -141,6 +143,7 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
       setSelectedTrejeitos(editingMember.trejeitos || [])
       setSelectedAbilities(editingMember.abilities || [])
       setSelectedDisabilities(editingMember.disabilities || [])
+      setConductionBonuses(editingMember.conductionBonuses || {})
     } else {
       setName("")
       setType("semideus")
@@ -170,6 +173,7 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
       })
       setSelectedPeculiarities([])
       setSelectedTrejeitos([])
+      setConductionBonuses({})
     }
     setNewSpecializationInputs({
       languages: "",
@@ -184,7 +188,7 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
   const divineParentEffectsRequiringInput = useMemo(() => {
     if (type !== "semideus" || !divineParent) return []
     const selectedParent = allDivineParents.find((dp) => dp.name === divineParent)
-    return selectedParent?.effects.filter((effect) => effect.requiresUserInput) || []
+    return selectedParent?.effects.filter((effect) => effect.requiresUserInput && !effect.isAutoApplied) || []
   }, [type, divineParent])
 
   function handleSubmit(e: React.FormEvent) {
@@ -235,6 +239,7 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
       selectedTrejeitos,
       divineParent,
       divineParentUserSpecializations,
+      conductionBonuses,
     )
 
     const memberToSave: Member = {
@@ -263,17 +268,12 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
       derivedGlobalSkillEffects: globalEffects,
       divineParentUserSpecializations: divineParentUserSpecializations,
       abilities: selectedAbilities,
-      disabilities: selectedDisabilities
+      disabilities: selectedDisabilities,
+      conductionBonuses: conductionBonuses,
     }
 
     if (type === "semideus") memberToSave.divineParent = divineParent.trim()
     onAddMember(memberToSave)
-  }
-
-  const divineParentAutoSpecializations: Record<string, { skillName: string; value: string }> = {
-    "Afrodite & Vênus": { skillName: "Idiomas", value: "Francês" },
-    "Quione": { skillName: "Idiomas", value: "Francês" },
-    "Eros & Cupido": { skillName: "Idiomas", value: "Espanhol" },
   }
 
   return (
@@ -285,7 +285,6 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
       onSubmit={handleSubmit}
       isEditing={!!editingMember}
     >
-      {/* Nome e Tipo lado a lado */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">Nome</label>
@@ -319,6 +318,7 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
               onChange={(e) => {
                 setDivineParent(e.target.value)
                 setDivineParentUserSpecializations({})
+                setConductionBonuses({})
               }}
               className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
               required={type === "semideus"}
@@ -332,65 +332,34 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
             </select>
           </div>
 
-          {/* Campos para especializações de filiação divina */}
           {divineParentEffectsRequiringInput.length > 0 && (
             <div className="bg-gray-50 rounded-xl p-4">
               <h4 className="text-lg font-semibold text-gray-800 mb-4">Especializações da Filiação Divina</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {divineParentEffectsRequiringInput.map((effect) => {
-                  const autoSpec = divineParentAutoSpecializations[divineParent]
-                  if (
-                    autoSpec &&
-                    effect.skillName === autoSpec.skillName
-                  ) {
-                    setTimeout(() => {
-                      setDivineParentUserSpecializations((prev) => ({
-                        ...prev,
-                        [effect.skillName]: autoSpec.value,
-                      }))
-                    }, 0)
-                    return (
-                      <div key={effect.skillName}>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                          {effect.skillName}:
-                        </label>
-                        <input
-                          type="text"
-                          value={autoSpec.value}
-                          disabled
-                          className="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-100 text-gray-500"
-                        />
-                      </div>
-                    )
-                  }
-                  return (
-                    <div key={effect.skillName}>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        {effect.skillName}:
-                      </label>
-                      <input
-                        type="text"
-                        value={divineParentUserSpecializations[effect.skillName] || ""}
-                        onChange={(e) =>
-                          setDivineParentUserSpecializations((prev) => ({
-                            ...prev,
-                            [effect.skillName]: e.target.value,
-                          }))
-                        }
-                        placeholder={effect.userInputPlaceholder}
-                        className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                        required
-                      />
-                    </div>
-                  )
-                })}
+                {divineParentEffectsRequiringInput.map((effect) => (
+                  <div key={effect.skillName}>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">{effect.skillName}:</label>
+                    <input
+                      type="text"
+                      value={divineParentUserSpecializations[effect.skillName] || ""}
+                      onChange={(e) =>
+                        setDivineParentUserSpecializations((prev) => ({
+                          ...prev,
+                          [effect.skillName]: e.target.value,
+                        }))
+                      }
+                      placeholder={effect.userInputPlaceholder}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      required
+                    />
+                  </div>
+                ))}
               </div>
             </div>
           )}
         </div>
       )}
 
-      {/* Atributos */}
       <div className="bg-gray-50 rounded-xl p-4">
         <h4 className="text-lg font-semibold text-gray-800 mb-4">Atributos</h4>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -417,7 +386,6 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
         </div>
       </div>
 
-      {/* Accordion - Poderes */}
       <AccordionSection
         title="Poderes"
         open={accordion.powers}
@@ -426,7 +394,6 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
         <SkillCategoryInput skills={allPowers} values={powers} setValues={setPowers} teamColor={teamColor} />
       </AccordionSection>
 
-      {/* Accordion - Estilos */}
       <AccordionSection
         title="Estilos"
         open={accordion.styles}
@@ -435,14 +402,12 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
         <SkillCategoryInput skills={allStyles} values={styles} setValues={setStyles} teamColor={teamColor} />
       </AccordionSection>
 
-      {/* Accordion principal de Perícias */}
       <AccordionSection
         title="Perícias"
-        open={accordion.pericias}
-        onToggle={() => setAccordion((prev: AccordionState) => ({ ...prev, pericias: !prev.pericias }))}
+        open={accordion.skills}
+        onToggle={() => setAccordion((prev: AccordionState) => ({ ...prev, skills: !prev.skills }))}
       >
         <div className="space-y-4">
-          {/* Perícias de Combate */}
           <AccordionSection
             title="Perícias de Combate"
             open={accordion.combat}
@@ -451,7 +416,6 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
             <SkillCategoryInput skills={combatSkills} values={combat} setValues={setCombat} teamColor={teamColor} />
           </AccordionSection>
 
-          {/* Perícias Sociais */}
           <AccordionSection
             title="Perícias Sociais"
             open={accordion.social}
@@ -460,7 +424,6 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
             <SkillCategoryInput skills={socialSkills} values={social} setValues={setSocial} teamColor={teamColor} />
           </AccordionSection>
 
-          {/* Perícias de Utilidade */}
           <AccordionSection
             title="Perícias de Utilidade"
             open={accordion.utility}
@@ -469,7 +432,6 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
             <SkillCategoryInput skills={utilitySkills} values={utility} setValues={setUtility} teamColor={teamColor} />
           </AccordionSection>
 
-          {/* Perícias Complementares */}
           <AccordionSection
             title="Perícias Complementares"
             open={accordion.complementary}
@@ -483,7 +445,6 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
             />
           </AccordionSection>
 
-          {/* Perícias de Especialização */}
           <AccordionSection
             title="Perícias de Especialização"
             open={accordion.specialization}
@@ -501,6 +462,9 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
                   teamColor={teamColor}
                   accordionState={accordion}
                   setAccordionState={setAccordion}
+                  conductionBonuses={conductionBonuses}
+                  setConductionBonuses={setConductionBonuses}
+                  divineParent={divineParent}
                 />
               ))}
             </div>
@@ -508,7 +472,6 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
         </div>
       </AccordionSection>
 
-      {/* Accordion - Vantagens */}
       <AccordionSection
         title="Vantagens"
         open={accordion.advantages}
@@ -522,13 +485,12 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
           >
             <AdvantageDisadvantageSelector
               label="Selecione as Aptidões"
-              items={abilities.map(a => ({ name: a.name }))}
+              items={abilities.map((a) => ({ name: a.name }))}
               selectedItems={selectedAbilities}
               setSelectedItems={setSelectedAbilities}
               teamColor={teamColor}
             />
           </AccordionSection>
-          {/* Nested Accordion - Peculiaridades */}
           <AccordionSection
             title="Peculiaridades"
             open={accordion.peculiarities}
@@ -542,11 +504,9 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
               teamColor={teamColor}
             />
           </AccordionSection>
-          {/* Aptidões e Regalias virão aqui futuramente */}
         </div>
       </AccordionSection>
 
-      {/* Accordion - Desvantagens */}
       <AccordionSection
         title="Desvantagens"
         open={accordion.disadvantages}
@@ -560,14 +520,13 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
           >
             <AdvantageDisadvantageSelector
               label="Selecione as Inaptidões"
-              items={disabilities.map(a => ({ name: a.name }))}
+              items={disabilities.map((a) => ({ name: a.name }))}
               selectedItems={selectedDisabilities}
               setSelectedItems={setSelectedDisabilities}
               teamColor={teamColor}
             />
           </AccordionSection>
 
-          {/* Nested Accordion - Trejeitos */}
           <AccordionSection
             title="Trejeitos"
             open={accordion.trejeitos}
@@ -581,12 +540,15 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
               teamColor={teamColor}
             />
           </AccordionSection>
-          {/* Inaptidões e Obstáculos virão aqui futuramente */}
         </div>
       </AccordionSection>
     </AddMemberModalLayout>
   )
 }
+
+
+
+
 
 
 

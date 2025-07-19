@@ -5,6 +5,7 @@ import type {
   TrejeitoData,
   GlobalSkillEffect,
   SpecializationCategory,
+  AccordionState,
 } from "../constants/rpg.data"
 import {
   allPeculiarities,
@@ -25,7 +26,7 @@ type Props = {
 }
 
 export default function MemberInfoModal({ member, onClose }: Props) {
-  const [accordion, setAccordion] = useState({
+  const [accordion, setAccordion] = useState<AccordionState>({
     powers: false,
     styles: false,
     skills: false,
@@ -34,11 +35,17 @@ export default function MemberInfoModal({ member, onClose }: Props) {
     utility: false,
     complementary: false,
     specialization: false,
+    languages: false,
+    arts: false,
+    knowledge: false,
+    driving: false,
+    crafts: false,
+    sports: false,
     advantages: false,
-    aptidoes: false,
+    abilities: false,
     peculiarities: false,
     disadvantages: false,
-    inaptidoes: false,
+    disabilities: false,
     trejeitos: false,
   })
 
@@ -166,8 +173,11 @@ export default function MemberInfoModal({ member, onClose }: Props) {
       const hasIndividualEffectOnThisSkill = derivedGlobalSkillEffects.some(
         (effect) => effect.type === "individual" && effect.skillName === skillName && effect.category === categoryKey,
       )
+      const hasCategoryEffect = derivedGlobalSkillEffects.some(
+        (effect) => effect.type === "category" && effect.category === categoryKey,
+      )
 
-      if (finalValue > 0 || hasIndividualEffectOnThisSkill) {
+      if (finalValue > 0 || hasIndividualEffectOnThisSkill || hasCategoryEffect) {
         activeSpecializations[categoryKey][skillName] = finalValue
       }
     }
@@ -175,12 +185,10 @@ export default function MemberInfoModal({ member, onClose }: Props) {
     const categoryGlobalEffect = derivedGlobalSkillEffects?.find(
       (effect) => effect.type === "category" && effect.category === categoryKey,
     )
-
     if (categoryGlobalEffect) {
       activeSpecializations[categoryKey][`Todos`] = categoryGlobalEffect.value
     }
   }
-
   ;(Object.keys(specializationCategories) as SpecializationCategory[]).forEach(processSpecializationCategory)
 
   function renderSection(title: string, items: Record<string, number>, emptyMessage: string) {
@@ -215,9 +223,9 @@ export default function MemberInfoModal({ member, onClose }: Props) {
     allItems: { name: string }[],
     emptyMessage: string,
   ) {
-    const itemsToDisplay = selectedNames
-      .map((name) => allItems.find((item) => item.name === name))
-      .filter(Boolean) as { name: string }[]
+    const itemsToDisplay = selectedNames.map((name) => allItems.find((item) => item.name === name)).filter(Boolean) as {
+      name: string
+    }[]
 
     return (
       <div className="bg-gray-50 rounded-lg p-4">
@@ -225,10 +233,7 @@ export default function MemberInfoModal({ member, onClose }: Props) {
         {itemsToDisplay.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {itemsToDisplay.map((item) => (
-              <div
-                key={item.name}
-                className="bg-white rounded px-2 py-1 text-xs sm:text-sm break-words"
-              >
+              <div key={item.name} className="bg-white rounded px-2 py-1 text-xs sm:text-sm break-words">
                 <span className="font-medium text-gray-700">{item.name}</span>
               </div>
             ))}
@@ -257,10 +262,7 @@ export default function MemberInfoModal({ member, onClose }: Props) {
         {itemsToDisplay.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {itemsToDisplay.map((item) => (
-              <div
-                key={item.name}
-                className="bg-white rounded px-2 py-1 text-xs sm:text-sm break-words"
-              >
+              <div key={item.name} className="bg-white rounded px-2 py-1 text-xs sm:text-sm break-words">
                 <span className="font-medium text-gray-700">{item.name}</span>
               </div>
             ))}
@@ -284,7 +286,6 @@ export default function MemberInfoModal({ member, onClose }: Props) {
         className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[85vh] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-gray-200">
           <div className="flex justify-between items-center">
             <div>
@@ -302,7 +303,6 @@ export default function MemberInfoModal({ member, onClose }: Props) {
                     Semideus
                   </span>
                 )}
-
               </div>
             </div>
             <button
@@ -317,9 +317,7 @@ export default function MemberInfoModal({ member, onClose }: Props) {
           </div>
         </div>
 
-        {/* Content */}
         <div className="overflow-y-auto max-h-[calc(85vh-160px)] px-2 sm:px-6 py-4 space-y-6">
-          {/* Atributos Básicos */}
           <div className="bg-gray-50 rounded-lg p-4">
             <h4 className="font-semibold text-gray-800 mb-3">Atributos</h4>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -358,7 +356,6 @@ export default function MemberInfoModal({ member, onClose }: Props) {
             </div>
           </div>
 
-          {/* Atributos Derivados */}
           <div className="bg-gray-50 rounded-lg p-4">
             <h4 className="font-semibold text-gray-800 mb-3">Atributos Derivados</h4>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -381,60 +378,58 @@ export default function MemberInfoModal({ member, onClose }: Props) {
             </div>
           </div>
 
-          {/* Quadro Poderes & Estilos */}
           <div className="bg-gray-50 rounded-lg p-4">
             <h4 className="font-semibold text-gray-800 mb-3">Poderes & Estilos</h4>
             <AccordionSection
               title="Poderes"
               open={accordion.powers}
-              onToggle={() => setAccordion(prev => ({ ...prev, powers: !prev.powers }))}
+              onToggle={() => setAccordion((prev) => ({ ...prev, powers: !prev.powers }))}
             >
               {renderSection("", activePowers, "Nenhum poder adquirido")}
             </AccordionSection>
             <AccordionSection
               title="Estilos"
               open={accordion.styles}
-              onToggle={() => setAccordion(prev => ({ ...prev, styles: !prev.styles }))}
+              onToggle={() => setAccordion((prev) => ({ ...prev, styles: !prev.styles }))}
             >
               {renderSection("", activeStyles, "Nenhum estilo adquirido")}
             </AccordionSection>
           </div>
 
-          {/* Quadro Perícias */}
           <div className="bg-gray-50 rounded-lg p-4">
             <h4 className="font-semibold text-gray-800 mb-3">Perícias</h4>
             <AccordionSection
               title="Combate"
               open={accordion.combat}
-              onToggle={() => setAccordion(prev => ({ ...prev, combat: !prev.combat }))}
+              onToggle={() => setAccordion((prev) => ({ ...prev, combat: !prev.combat }))}
             >
               {renderSection("", activeCombatSkills, "Nenhuma perícia de combate adquirida")}
             </AccordionSection>
             <AccordionSection
               title="Sociais"
               open={accordion.social}
-              onToggle={() => setAccordion(prev => ({ ...prev, social: !prev.social }))}
+              onToggle={() => setAccordion((prev) => ({ ...prev, social: !prev.social }))}
             >
               {renderSection("", activeSocialSkills, "Nenhuma perícia social adquirida")}
             </AccordionSection>
             <AccordionSection
               title="Utilidade"
               open={accordion.utility}
-              onToggle={() => setAccordion(prev => ({ ...prev, utility: !prev.utility }))}
+              onToggle={() => setAccordion((prev) => ({ ...prev, utility: !prev.utility }))}
             >
               {renderSection("", activeUtilitySkills, "Nenhuma perícia de utilidade adquirida")}
             </AccordionSection>
             <AccordionSection
               title="Complementares"
               open={accordion.complementary}
-              onToggle={() => setAccordion(prev => ({ ...prev, complementary: !prev.complementary }))}
+              onToggle={() => setAccordion((prev) => ({ ...prev, complementary: !prev.complementary }))}
             >
               {renderSection("", activeComplementarySkills, "Nenhuma perícia complementar adquirida")}
             </AccordionSection>
             <AccordionSection
               title="Especialização"
               open={accordion.specialization}
-              onToggle={() => setAccordion(prev => ({ ...prev, specialization: !prev.specialization }))}
+              onToggle={() => setAccordion((prev) => ({ ...prev, specialization: !prev.specialization }))}
             >
               <div className="space-y-4">
                 {(Object.keys(specializationCategories) as SpecializationCategory[]).map((categoryKey) => {
@@ -446,7 +441,10 @@ export default function MemberInfoModal({ member, onClose }: Props) {
                       <h5 className="font-medium text-gray-700 mb-2">{specializationCategories[categoryKey]}</h5>
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                         {Object.entries(skillsToDisplay).map(([name, value]) => (
-                          <div key={name} className="flex justify-between items-center bg-white rounded px-2 py-1 text-xs sm:text-sm break-words">
+                          <div
+                            key={name}
+                            className="flex justify-between items-center bg-white rounded px-2 py-1 text-xs sm:text-sm break-words"
+                          >
                             <span className="text-gray-700">{name}</span>
                             <span className="font-bold text-gray-900">{value}</span>
                           </div>
@@ -464,30 +462,24 @@ export default function MemberInfoModal({ member, onClose }: Props) {
             </AccordionSection>
           </div>
 
-          {/* Quadro Vantagens & Desvantagens */}
           <div className="bg-gray-50 rounded-lg p-4">
             <h4 className="font-semibold text-gray-800 mb-3">Vantagens & Desvantagens</h4>
             <AccordionSection
               title="Vantagens"
               open={accordion.advantages}
-              onToggle={() => setAccordion(prev => ({ ...prev, advantages: !prev.advantages }))}
+              onToggle={() => setAccordion((prev) => ({ ...prev, advantages: !prev.advantages }))}
             >
               <AccordionSection
                 title="Aptidões"
-                open={accordion.aptidoes}
-                onToggle={() => setAccordion(prev => ({ ...prev, aptidoes: !prev.aptidoes }))}
+                open={accordion.abilities}
+                onToggle={() => setAccordion((prev) => ({ ...prev, abilities: !prev.abilities }))}
               >
-                {renderSimpleListSection(
-                  "",
-                  member.abilities || [],
-                  abilities,
-                  "Nenhuma aptidão selecionada.",
-                )}
+                {renderSimpleListSection("", member.abilities || [], abilities, "Nenhuma aptidão selecionada.")}
               </AccordionSection>
               <AccordionSection
                 title="Peculiaridades"
                 open={accordion.peculiarities}
-                onToggle={() => setAccordion(prev => ({ ...prev, peculiarities: !prev.peculiarities }))}
+                onToggle={() => setAccordion((prev) => ({ ...prev, peculiarities: !prev.peculiarities }))}
               >
                 {renderAdvantageDisadvantageSection(
                   "",
@@ -500,24 +492,19 @@ export default function MemberInfoModal({ member, onClose }: Props) {
             <AccordionSection
               title="Desvantagens"
               open={accordion.disadvantages}
-              onToggle={() => setAccordion(prev => ({ ...prev, disadvantages: !prev.disadvantages }))}
+              onToggle={() => setAccordion((prev) => ({ ...prev, disadvantages: !prev.disadvantages }))}
             >
               <AccordionSection
                 title="Inaptidões"
-                open={accordion.inaptidoes}
-                onToggle={() => setAccordion(prev => ({ ...prev, inaptidoes: !prev.inaptidoes }))}
+                open={accordion.disabilities}
+                onToggle={() => setAccordion((prev) => ({ ...prev, disabilities: !prev.disabilities }))}
               >
-                {renderSimpleListSection(
-                  "",
-                  member.disabilities || [],
-                  disabilities,
-                  "Nenhuma inaptidão selecionada.",
-                )}
+                {renderSimpleListSection("", member.disabilities || [], disabilities, "Nenhuma inaptidão selecionada.")}
               </AccordionSection>
               <AccordionSection
                 title="Trejeitos"
                 open={accordion.trejeitos}
-                onToggle={() => setAccordion(prev => ({ ...prev, trejeitos: !prev.trejeitos }))}
+                onToggle={() => setAccordion((prev) => ({ ...prev, trejeitos: !prev.trejeitos }))}
               >
                 {renderAdvantageDisadvantageSection(
                   "",
@@ -530,7 +517,6 @@ export default function MemberInfoModal({ member, onClose }: Props) {
           </div>
         </div>
 
-        {/* Footer */}
         <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end">
           <button
             onClick={onClose}
@@ -543,6 +529,10 @@ export default function MemberInfoModal({ member, onClose }: Props) {
     </div>
   )
 }
+
+
+
+
 
 
 

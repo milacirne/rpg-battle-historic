@@ -33,6 +33,7 @@ export type Member = {
   divineParentUserSpecializations?: Record<string, string>
   abilities: string[]
   disabilities: string[]
+  conductionBonuses?: Record<string, boolean>
 }
 
 export const allPowers = [
@@ -108,7 +109,7 @@ export type SpecializationCategory = keyof typeof specializationCategories
 export type AccordionState = {
   powers: boolean
   styles: boolean
-  pericias: boolean
+  skills: boolean
   combat: boolean
   social: boolean
   utility: boolean
@@ -144,13 +145,12 @@ export type TrejeitoData = {
 }
 
 export type GlobalSkillEffect = {
-  type: "individual" | "category" // Novo campo para indicar o tipo de efeito
-  category: SpecializationCategory | "combat" | "social" | "utility" | "complementary" // Categoria da perícia
-  skillName: string // Nome da perícia específica ou nome da categoria (ex: "Luta", "Idiomas")
+  type: "individual" | "category"
+  category: SpecializationCategory | "combat" | "social" | "utility" | "complementary"
+  skillName: string
   value: number
 }
 
-// Helper function to capitalize the first letter and make the rest lowercase
 function capitalizeFirstLetter(str: string): string {
   if (!str) return ""
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
@@ -158,247 +158,248 @@ function capitalizeFirstLetter(str: string): string {
 
 export const allPeculiarities: PeculiarityData[] = [
   {
-    name: capitalizeFirstLetter("Cortês"),
+    name: "Cortês",
     effects: [
       { skill: "Sedução", value: 2 },
       { skill: "Empatia", value: 2 },
     ],
   },
   {
-    name: capitalizeFirstLetter("TROMBADINHA"),
+    name: "Trombadinha",
     effects: [
       { skill: "Furtividade", value: 2 },
       { skill: "Prestidigitação", value: 2 },
     ],
   },
   {
-    name: capitalizeFirstLetter("CAÇADOR"),
+    name: "Caçador",
     effects: [
       { skill: "Medicina", value: 2 },
       { skill: "Sobrevivência", value: 2 },
     ],
   },
   {
-    name: capitalizeFirstLetter("HACKER"),
+    name: "Hacker",
     effects: [
       { skill: "Segurança", value: 2 },
       { skill: "Computação", value: 2 },
     ],
   },
   {
-    name: capitalizeFirstLetter("BRUCUTU"),
+    name: "Brucutu",
     effects: [
       { skill: "Intimidação", value: 2 },
       { skill: "Atletismo", value: 2 },
     ],
   },
   {
-    name: capitalizeFirstLetter("ESPIÃO"),
+    name: "Espião",
     effects: [
       { skill: "Furtividade", value: 2 },
       { skill: "Investigação", value: 2 },
     ],
   },
   {
-    name: capitalizeFirstLetter("CURANDEIRO"),
+    name: "Curandeiro",
     effects: [
       { skill: "Empatia", value: 2 },
       { skill: "Medicina", value: 2 },
     ],
   },
   {
-    name: capitalizeFirstLetter("CHARLATÃO"),
+    name: "Charlatão",
     effects: [
       { skill: "Lábia", value: 2 },
       { skill: "Persuasão", value: 2 },
     ],
   },
   {
-    name: capitalizeFirstLetter("MALABARISTA"),
+    name: "Malabarista",
     effects: [
       { skill: "Prestidigitação", value: 2 },
       { skill: "Acrobacia", value: 2 },
     ],
   },
   {
-    name: capitalizeFirstLetter("FERREIRO"),
+    name: "Ferreiro",
     effects: [
       { skill: "Forja", value: 2 },
       { skill: "Computação", value: 2 },
     ],
   },
   {
-    name: capitalizeFirstLetter("EXPLORADOR"),
+    name: "Explorador",
     effects: [
       { skill: "Sobrevivência", value: 2 },
       { skill: "Acrobacia", value: 2 },
     ],
   },
   {
-    name: capitalizeFirstLetter("LADRÃO"),
+    name: "Ladrão",
     effects: [
       { skill: "Segurança", value: 2 },
       { skill: "Intimidação", value: 2 },
     ],
   },
   {
-    name: capitalizeFirstLetter("MANIPULADOR"),
+    name: "Manipulador",
     effects: [
       { skill: "Lábia", value: 2 },
       { skill: "Sedução", value: 2 },
     ],
   },
   {
-    name: capitalizeFirstLetter("SOLDADO"),
+    name: "Soldado",
     effects: [
       { skill: "Forja", value: 2 },
       { skill: "Atletismo", value: 2 },
     ],
   },
   {
-    name: capitalizeFirstLetter("OPORTUNISTA"),
+    name: "Oportunista",
     effects: [
       { skill: "Persuasão", value: 2 },
       { skill: "Investigação", value: 2 },
     ],
   },
-  { name: capitalizeFirstLetter("ACADÊMICO"), effects: [{ skill: "Conhecimento", value: 2 }] },
-  { name: capitalizeFirstLetter("ATLETA"), effects: [{ skill: "Esportes", value: 2 }] },
-  { name: capitalizeFirstLetter("ARTISTA"), effects: [{ skill: "Artes", value: 2 }] },
-  { name: capitalizeFirstLetter("LINGUISTA"), effects: [{ skill: "Idiomas", value: 2 }] },
-  { name: capitalizeFirstLetter("PROFISSIONAL"), effects: [{ skill: "Ofícios", value: 2 }] },
-  { name: capitalizeFirstLetter("MOTORISTA"), effects: [{ skill: "Condução", value: 2 }] },
+  { name: "Acadêmico", effects: [{ skill: "Conhecimento", value: 2 }] },
+  { name: "Atleta", effects: [{ skill: "Esportes", value: 2 }] },
+  { name: "Artista", effects: [{ skill: "Artes", value: 2 }] },
+  { name: "Linguista", effects: [{ skill: "Idiomas", value: 2 }] },
+  { name: "Profissional", effects: [{ skill: "Ofícios", value: 2 }] },
+  { name: "Motorista", effects: [{ skill: "Condução", value: 2 }] },
 ]
 
 export const allTrejeitos: TrejeitoData[] = [
   {
-    name: capitalizeFirstLetter("BREGA"),
+    name: "Brega",
     effects: [
       { skill: "Persuasão", value: -2 },
       { skill: "Prestidigitação", value: -2 },
     ],
   },
   {
-    name: capitalizeFirstLetter("FRANCO"),
+    name: "Franco",
     effects: [
       { skill: "Lábia", value: -2 },
       { skill: "Medicina", value: -2 },
     ],
   },
   {
-    name: capitalizeFirstLetter("RÚSTICO"),
+    name: "Rústico",
     effects: [
       { skill: "Computação", value: -2 },
       { skill: "Segurança", value: -2 },
     ],
   },
   {
-    name: capitalizeFirstLetter("DESENGONÇADO"),
+    name: "Desengonçado",
     effects: [
       { skill: "Acrobacia", value: -2 },
       { skill: "Atletismo", value: -2 },
     ],
   },
   {
-    name: capitalizeFirstLetter("IRÔNICO"),
+    name: "Irônico",
     effects: [
       { skill: "Persuasão", value: -2 },
       { skill: "Lábia", value: -2 },
     ],
   },
   {
-    name: capitalizeFirstLetter("FOFO"),
+    name: "Fofo",
     effects: [
       { skill: "Intimidação", value: -2 },
       { skill: "Sedução", value: -2 },
     ],
   },
   {
-    name: capitalizeFirstLetter("BRUTO"),
+    name: "Bruto",
     effects: [
       { skill: "Medicina", value: -2 },
       { skill: "Prestidigitação", value: -2 },
     ],
   },
   {
-    name: capitalizeFirstLetter("NERD"),
+    name: "Nerd",
     effects: [
       { skill: "Atletismo", value: -2 },
       { skill: "Empatia", value: -2 },
     ],
   },
   {
-    name: capitalizeFirstLetter("DISTRAÍDO"),
+    name: "Distraído",
     effects: [
       { skill: "Investigação", value: -2 },
       { skill: "Forja", value: -2 },
     ],
   },
   {
-    name: capitalizeFirstLetter("IMPETUOSO"),
+    name: "Impetuoso",
     effects: [
       { skill: "Sobrevivência", value: -2 },
       { skill: "Furtividade", value: -2 },
     ],
   },
   {
-    name: capitalizeFirstLetter("DESTRUTIVO"),
+    name: "Destrutivo",
     effects: [
       { skill: "Forja", value: -2 },
       { skill: "Segurança", value: -2 },
     ],
   },
   {
-    name: capitalizeFirstLetter("DURÃO"),
+    name: "Durão",
     effects: [
       { skill: "Sedução", value: -2 },
       { skill: "Empatia", value: -2 },
     ],
   },
   {
-    name: capitalizeFirstLetter("PREVISÍVEL"),
+    name: "Previsível",
     effects: [
       { skill: "Furtividade", value: -2 },
       { skill: "Investigação", value: -2 },
     ],
   },
   {
-    name: capitalizeFirstLetter("MIMADO"),
+    name: "Mimado",
     effects: [
       { skill: "Intimidação", value: -2 },
       { skill: "Sobrevivência", value: -2 },
     ],
   },
   {
-    name: capitalizeFirstLetter("DESASTRADO"),
+    name: "Desastrado",
     effects: [
       { skill: "Computação", value: -2 },
       { skill: "Acrobacia", value: -2 },
     ],
   },
-  { name: capitalizeFirstLetter("BAIRRISTA"), effects: [{ skill: "Idiomas", value: -2 }] },
-  { name: capitalizeFirstLetter("INDOLENTE"), effects: [{ skill: "Esportes", value: -2 }] },
-  { name: capitalizeFirstLetter("PRETENSIOSO"), effects: [{ skill: "Artes", value: -2 }] },
-  { name: capitalizeFirstLetter("CONSERVADOR"), effects: [{ skill: "Conhecimento", value: -2 }] },
-  { name: capitalizeFirstLetter("RELAPSO"), effects: [{ skill: "Ofícios", value: -2 }] },
-  { name: capitalizeFirstLetter("BARBEIRO"), effects: [{ skill: "Condução", value: -2 }] },
+  { name: "Bairrista", effects: [{ skill: "Idiomas", value: -2 }] },
+  { name: "Indolente", effects: [{ skill: "Esportes", value: -2 }] },
+  { name: "Pretensioso", effects: [{ skill: "Artes", value: -2 }] },
+  { name: "Conservador", effects: [{ skill: "Conhecimento", value: -2 }] },
+  { name: "Relapso", effects: [{ skill: "Ofícios", value: -2 }] },
+  { name: "Barbeiro", effects: [{ skill: "Condução", value: -2 }] },
 ]
 
-// NOVO: Tipo para efeitos de perícia de filiação divina
 export type DivineSkillEffect = {
-  skillName: string // O nome da perícia genérica (ex: "Artes", "Condução")
+  skillName: string
   value: number
   category: SpecializationCategory | "combat" | "social" | "utility" | "complementary"
-  requiresUserInput?: boolean // Se true, o usuário precisa especificar uma sub-perícia
-  userInputPlaceholder?: string // Ex: "Teatro ou similares", "veículos aéreos"
+  requiresUserInput?: boolean
+  userInputPlaceholder?: string
+  isAutoApplied?: boolean
+  autoAppliedValue?: string
 }
 
 export type DivineParentData = {
-  name: string // Nome da filiação (ex: "Zeus & Júpiter")
+  name: string
   greekName: string
   romanName: string
-  effects: DivineSkillEffect[] // Usando o novo tipo DivineSkillEffect
-  tagClass: string // Classe Tailwind para a cor da tag (ex: "bg-blue-500 text-white")
+  effects: DivineSkillEffect[]
+  tagClass: string
 }
 
 export const allDivineParents: DivineParentData[] = [
@@ -413,8 +414,8 @@ export const allDivineParents: DivineParentData[] = [
         skillName: "Condução",
         value: 2,
         category: "driving",
-        requiresUserInput: true,
-        userInputPlaceholder: "veículos aéreos",
+        isAutoApplied: true,
+        autoAppliedValue: "Aéreos",
       },
     ],
     tagClass: "bg-blue-300 text-white",
@@ -430,8 +431,8 @@ export const allDivineParents: DivineParentData[] = [
         skillName: "Condução",
         value: 2,
         category: "driving",
-        requiresUserInput: true,
-        userInputPlaceholder: "veículos aquáticos",
+        isAutoApplied: true,
+        autoAppliedValue: "Aquáticos",
       },
     ],
     tagClass: "bg-blue-600 text-white",
@@ -447,8 +448,8 @@ export const allDivineParents: DivineParentData[] = [
         skillName: "Condução",
         value: 2,
         category: "driving",
-        requiresUserInput: true,
-        userInputPlaceholder: "veículos terrestres",
+        isAutoApplied: true,
+        autoAppliedValue: "Terrestres",
       },
     ],
     tagClass: "bg-gray-800 text-white",
@@ -560,8 +561,8 @@ export const allDivineParents: DivineParentData[] = [
         skillName: "Idiomas",
         value: 2,
         category: "languages",
-        requiresUserInput: true,
-        userInputPlaceholder: "Francês",
+        isAutoApplied: true,
+        autoAppliedValue: "Francês",
       },
     ],
     tagClass: "bg-pink-500 text-white",
@@ -662,8 +663,8 @@ export const allDivineParents: DivineParentData[] = [
         skillName: "Idiomas",
         value: 2,
         category: "languages",
-        requiresUserInput: true,
-        userInputPlaceholder: "Francês",
+        isAutoApplied: true,
+        autoAppliedValue: "Francês",
       },
     ],
     tagClass: "bg-sky-400 text-white",
@@ -764,8 +765,8 @@ export const allDivineParents: DivineParentData[] = [
         skillName: "Idiomas",
         value: 2,
         category: "languages",
-        requiresUserInput: true,
-        userInputPlaceholder: "Espanhol",
+        isAutoApplied: true,
+        autoAppliedValue: "Espanhol",
       },
     ],
     tagClass: "bg-red-400 text-white",
@@ -894,7 +895,11 @@ export const abilities = [
   { name: "Corpulento", attribute: "force", value: 2 },
   { name: "Habilidoso", attribute: "dexterity", value: 2 },
   { name: "Veloz", attribute: "agility", value: 2 },
-  { name: "Sadio", attribute: "vigor", value: 2 },
+  {
+    name: "Sadio",
+    attribute: "vigor",
+    value: 2,
+  },
   { name: "Arguto", attribute: "wisdom", value: 2 },
   { name: "Fascinante", attribute: "charisma", value: 2 },
   { name: "Diligente", attribute: "perception", value: 2 },
@@ -939,7 +944,8 @@ export function calculateFinalSkills(
   selectedPeculiarities: string[],
   selectedTrejeitos: string[],
   selectedDivineParentName?: string,
-  divineParentUserSpecializations?: Record<string, string>, // NOVO: Parâmetro para especializações do usuário
+  divineParentUserSpecializations?: Record<string, string>,
+  selectedConductionBonuses?: Record<string, boolean>,
 ): {
   skills: Member["baseSkills"]
   globalEffects: GlobalSkillEffect[]
@@ -961,12 +967,11 @@ export function calculateFinalSkills(
 
   const globalEffects: GlobalSkillEffect[] = []
 
-  // Coleta todos os efeitos de Peculiaridades
   selectedPeculiarities.forEach((pecName) => {
     const peculiarity = allPeculiarities.find((p) => p.name === pecName)
     if (peculiarity) {
       peculiarity.effects.forEach((effect) => {
-        const category = skillToCategoryMap[effect.skill] // effect.skill é o nome da perícia ou da categoria (ex: "Sedução", "Conhecimento")
+        const category = skillToCategoryMap[effect.skill]
         if (category) {
           if (
             category === "combat" ||
@@ -974,18 +979,15 @@ export function calculateFinalSkills(
             category === "utility" ||
             category === "complementary"
           ) {
-            // Perícias gerais são sempre tratadas como efeitos individuais
             globalEffects.push({ type: "individual", category: category, skillName: effect.skill, value: effect.value })
           } else {
-            // Categorias de especialização (Idiomas, Artes, etc.) são tratadas como efeitos de categoria
-            globalEffects.push({ type: "category", category: category, skillName: effect.skill, value: effect.value })
+            globalEffects.push({ type: "category", category: category, skillName: category, value: effect.value })
           }
         }
       })
     }
   })
 
-  // Coleta todos os efeitos de Trejeitos
   selectedTrejeitos.forEach((treName) => {
     const trejeito = allTrejeitos.find((t) => t.name === treName)
     if (trejeito) {
@@ -1000,7 +1002,7 @@ export function calculateFinalSkills(
           ) {
             globalEffects.push({ type: "individual", category: category, skillName: effect.skill, value: effect.value })
           } else {
-            globalEffects.push({ type: "category", category: category, skillName: effect.skill, value: effect.value })
+            globalEffects.push({ type: "category", category: category, skillName: category, value: effect.value })
           }
         }
       })
@@ -1011,37 +1013,37 @@ export function calculateFinalSkills(
     const divineParent = allDivineParents.find((dp) => dp.name === selectedDivineParentName)
     if (divineParent) {
       divineParent.effects.forEach((effect) => {
-        let finalSkillName = effect.skillName
-        let effectType: GlobalSkillEffect["type"] = "individual"
-
-        if (effect.requiresUserInput && divineParentUserSpecializations?.[effect.skillName]?.trim()) {
-          finalSkillName = divineParentUserSpecializations[effect.skillName].trim()
-          effectType = "individual"
-        } else if (effect.requiresUserInput && !divineParentUserSpecializations?.[effect.skillName]?.trim()) {
-          return
-        } else {
-          if (
-            effect.category === "languages" ||
-            effect.category === "arts" ||
-            effect.category === "knowledge" ||
-            effect.category === "driving" ||
-            effect.category === "crafts" ||
-            effect.category === "sports"
-          ) {
-            effectType = "category"
-            finalSkillName = specializationCategories[effect.category]
-          } else {
-            effectType = "individual"
-          }
+        if (effect.isAutoApplied) {
+          globalEffects.push({
+            type: "individual",
+            category: effect.category,
+            skillName: capitalizeFirstLetter(effect.autoAppliedValue!),
+            value: effect.value,
+          })
+        } else if (effect.requiresUserInput && divineParentUserSpecializations?.[effect.skillName]?.trim()) {
+          globalEffects.push({
+            type: "individual",
+            category: effect.category,
+            skillName: capitalizeFirstLetter(divineParentUserSpecializations[effect.skillName].trim()),
+            value: effect.value,
+          })
+        } else if (!effect.requiresUserInput && !effect.isAutoApplied) {
+          globalEffects.push({
+            type: "individual",
+            category: effect.category,
+            skillName: effect.skillName,
+            value: effect.value,
+          })
         }
-
-        globalEffects.push({
-          type: effectType,
-          category: effect.category,
-          skillName: finalSkillName,
-          value: effect.value,
-        })
       })
+    }
+  }
+
+  if (selectedConductionBonuses) {
+    for (const skillName in selectedConductionBonuses) {
+      if (selectedConductionBonuses[skillName]) {
+        globalEffects.push({ type: "individual", category: "driving", skillName: skillName, value: 2 })
+      }
     }
   }
 
@@ -1050,6 +1052,12 @@ export function calculateFinalSkills(
     globalEffects,
   }
 }
+
+
+
+
+
+
 
 
 
