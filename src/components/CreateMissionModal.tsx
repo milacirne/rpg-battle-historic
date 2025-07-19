@@ -1,35 +1,68 @@
-import type React from "react"
+import React from "react"
 
 type RPType = "Oficial" | "Semi-Oficial" | "Livre"
 
-type CreateMissionModalProps = {
-  modalOpen: boolean
+type MissionData = {
+  id?: string
   name: string
-  setName: React.Dispatch<React.SetStateAction<string>>
   type: RPType
-  setType: React.Dispatch<React.SetStateAction<RPType>>
   location: string
-  setLocation: React.Dispatch<React.SetStateAction<string>>
-  date: string
-  setDate: React.Dispatch<React.SetStateAction<string>>
-  onClose: () => void
-  onSubmit: (e: React.FormEvent) => void
+  createdAt: string
 }
 
-export function CreateMissionModal({
-  modalOpen,
-  name,
-  setName,
-  type,
-  setType,
-  location,
-  setLocation,
-  date,
-  setDate,
-  onClose,
-  onSubmit,
-}: CreateMissionModalProps) {
-  if (!modalOpen) return null
+type CreateMissionModalProps = {
+  isOpen: boolean
+  initialData?: MissionData | null
+  onClose: () => void
+  onSubmit: (data: MissionData) => void
+}
+
+export function CreateMissionModal({ isOpen, initialData, onClose, onSubmit }: CreateMissionModalProps) {
+  const [name, setName] = React.useState(initialData?.name || "")
+  const [type, setType] = React.useState<RPType>(initialData?.type || "Oficial")
+  const [location, setLocation] = React.useState(initialData?.location || "")
+  const [date, setDate] = React.useState(() => {
+    if (initialData?.createdAt) {
+      return new Date(initialData.createdAt).toISOString().split("T")[0]
+    }
+    return ""
+  })
+
+  React.useEffect(() => {
+    if (initialData) {
+      setName(initialData.name)
+      setType(initialData.type)
+      setLocation(initialData.location)
+      setDate(new Date(initialData.createdAt).toISOString().split("T")[0])
+    } else {
+      setName("")
+      setType("Oficial")
+      setLocation("")
+      setDate("")
+    }
+  }, [initialData, isOpen])
+
+  const isEditing = !!initialData
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!name.trim() || !location.trim() || !date.trim()) {
+      alert("Por favor, preencha Nome, Local e Data.")
+      return
+    }
+    const missionToSave: MissionData = {
+      name: name.trim(),
+      type,
+      location: location.trim(),
+      createdAt: new Date(date).toISOString(),
+    }
+    if (isEditing && initialData?.id) {
+      missionToSave.id = initialData.id
+    }
+    onSubmit(missionToSave)
+  }
+
+  if (!isOpen) return null
 
   return (
     <div
@@ -43,14 +76,9 @@ export function CreateMissionModal({
       aria-modal="true"
       role="dialog"
     >
-      <div
-        className="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h2 className="text-xl font-semibold mb-4">Nova Missão</h2>
-        <form onSubmit={onSubmit} className="space-y-4">
-          {" "}
-          {/* Removidas as classes flex-1 e overflow-y-auto */}
+      <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative" onClick={(e) => e.stopPropagation()}>
+        <h2 className="text-xl font-semibold mb-4">{isEditing ? "Editar Missão" : "Nova Missão"}</h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="missionName" className="block text-sm font-medium text-gray-700 mb-1">
               Nome da Missão
@@ -64,7 +92,6 @@ export function CreateMissionModal({
               required
             />
           </div>
-          {/* Campo de Data (agora o segundo) */}
           <div>
             <label htmlFor="missionDate" className="block text-sm font-medium text-gray-700 mb-1">
               Data
@@ -78,23 +105,23 @@ export function CreateMissionModal({
               required
             />
           </div>
-          {/* Campo de Tipo */}
           <div>
             <label htmlFor="missionType" className="block text-sm font-medium text-gray-700 mb-1">
               Tipo
             </label>
-            <select
-              id="missionType"
-              value={type}
-              onChange={(e) => setType(e.target.value as RPType)}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer"
-            >
-              <option value="Oficial">Oficial</option>
-              <option value="Semi-Oficial">Semi-Oficial</option>
-              <option value="Livre">Livre</option>
-            </select>
+            <div className="w-full border border-gray-300 rounded-md focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-colors">
+              <select
+                id="missionType"
+                value={type}
+                onChange={(e) => setType(e.target.value as RPType)}
+                className="w-full bg-white rounded-md px-3 pr-4 py-2 border-transparent focus:outline-none cursor-pointer border-r-[14px] border-r-transparent"
+              >
+                <option value="Oficial">Oficial</option>
+                <option value="Semi-Oficial">Semi-Oficial</option>
+                <option value="Livre">Livre</option>
+              </select>
+            </div>
           </div>
-          {/* Campo de Local */}
           <div>
             <label htmlFor="missionLocation" className="block text-sm font-medium text-gray-700 mb-1">
               Local
@@ -112,18 +139,21 @@ export function CreateMissionModal({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded border border-gray-300 hover:bg-gray-100 transition"
+              className="px-4 py-2 rounded border border-gray-300 hover:bg-gray-100 transition cursor-pointer"
             >
               Cancelar
             </button>
-            <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
-              Criar Missão
+            <button
+              type="submit"
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition cursor-pointer"
+            >
+              {isEditing ? "Salvar Alterações" : "Criar Missão"}
             </button>
           </div>
         </form>
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+          className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 cursor-pointer"
           aria-label="Fechar modal"
         >
           ✕
@@ -132,6 +162,10 @@ export function CreateMissionModal({
     </div>
   )
 }
+
+
+
+
 
 
 

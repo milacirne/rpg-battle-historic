@@ -16,51 +16,54 @@ type BattleSheet = {
   createdAt: string
 }
 
+type MissionData = {
+  id?: string
+  name: string
+  type: RPType
+  location: string
+  createdAt: string
+}
+
 type Props = {
   sheets: BattleSheet[]
   setSheets: React.Dispatch<React.SetStateAction<BattleSheet[]>>
 }
 
 export default function MainPage({ sheets, setSheets }: Props) {
-  const [createMissionModalOpen, setCreateMissionModalOpen] = useState(false) // Renomeado para clareza
-  const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = useState(false) // Novo estado
-  const [missionToDeleteId, setMissionToDeleteId] = useState<string | null>(null) // Novo estado
-
-  const [name, setName] = useState("")
-  const [type, setType] = useState<RPType>("Oficial")
-  const [location, setLocation] = useState("")
-  const [date, setDate] = useState(() => {
-    const today = new Date()
-    return today.toISOString().split("T")[0]
-  })
+  const [isMissionModalOpen, setIsMissionModalOpen] = useState(false)
+  const [editingMission, setEditingMission] = useState<BattleSheet | null>(null)
+  const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = useState(false)
+  const [missionToDeleteId, setMissionToDeleteId] = useState<string | null>(null)
 
   function openCreateMissionModal() {
-    setCreateMissionModalOpen(true)
+    setEditingMission(null)
+    setIsMissionModalOpen(true)
   }
 
-  function closeCreateMissionModal() {
-    setCreateMissionModalOpen(false)
-    setName("")
-    setType("Oficial")
-    setLocation("")
-    setDate(new Date().toISOString().split("T")[0])
+  function openEditMissionModal(mission: BattleSheet) {
+    setEditingMission(mission)
+    setIsMissionModalOpen(true)
   }
 
-  function handleCreateMissionSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!name.trim() || !location.trim()) {
-      alert("Por favor, preencha Nome e Local.")
-      return
+  function closeMissionModal() {
+    setIsMissionModalOpen(false)
+    setEditingMission(null)
+  }
+
+  function handleMissionSubmit(data: MissionData) {
+    if (editingMission) {
+      setSheets((prev) => prev.map((sheet) => (sheet.id === data.id ? ({ ...sheet, ...data } as BattleSheet) : sheet)))
+    } else {
+      const newSheet: BattleSheet = {
+        id: uuidv4(),
+        name: data.name,
+        type: data.type,
+        location: data.location,
+        createdAt: data.createdAt,
+      }
+      setSheets((prev) => [...prev, newSheet])
     }
-    const newSheet: BattleSheet = {
-      id: uuidv4(),
-      name: name.trim(),
-      type,
-      location: location.trim(),
-      createdAt: new Date(date).toISOString(),
-    }
-    setSheets((prev) => [...prev, newSheet])
-    closeCreateMissionModal()
+    closeMissionModal()
   }
 
   function handleDeleteMissionClick(id: string) {
@@ -95,21 +98,14 @@ export default function MainPage({ sheets, setSheets }: Props) {
       {sheets.length === 0 ? (
         <p className="text-gray-600">Nenhuma missão criada ainda.</p>
       ) : (
-        <BattleTable sheets={sheets} onDeleteMission={handleDeleteMissionClick} />
+        <BattleTable sheets={sheets} onDeleteMission={handleDeleteMissionClick} onEditMission={openEditMissionModal} />
       )}
 
       <CreateMissionModal
-        modalOpen={createMissionModalOpen}
-        name={name}
-        setName={setName}
-        type={type}
-        setType={setType}
-        location={location}
-        setLocation={setLocation}
-        date={date}
-        setDate={setDate}
-        onClose={closeCreateMissionModal}
-        onSubmit={handleCreateMissionSubmit}
+        isOpen={isMissionModalOpen}
+        initialData={editingMission}
+        onClose={closeMissionModal}
+        onSubmit={handleMissionSubmit}
       />
 
       <ConfirmDeleteModal
@@ -122,6 +118,8 @@ export default function MainPage({ sheets, setSheets }: Props) {
     </div>
   )
 }
+
+
 
 
 

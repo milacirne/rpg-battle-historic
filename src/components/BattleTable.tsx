@@ -1,6 +1,6 @@
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
-import { FaTrash } from "react-icons/fa"
+import { FaTrash, FaEdit } from "react-icons/fa"
 import { FiChevronUp, FiChevronDown } from "react-icons/fi"
 
 type BattleSheet = {
@@ -17,18 +17,22 @@ type SortDirection = "asc" | "desc"
 type Props = {
   sheets: BattleSheet[]
   onDeleteMission: (id: string) => void
+  onEditMission: (mission: BattleSheet) => void
 }
 
 function formatDate(dateString: string) {
   const date = new Date(dateString)
-  const options: Intl.DateTimeFormatOptions = { day: "2-digit", month: "long", year: "numeric" }
-  return date.toLocaleDateString("pt-BR", options)
+  const month = date.toLocaleDateString("pt-BR", { month: "long" })
+  const day = date.getDate()
+  const year = date.getFullYear()
+  return `${month.charAt(0).toUpperCase() + month.slice(1)}, ${day}, ${year}`
 }
 
-export default function BattleTable({ sheets, onDeleteMission }: Props) {
+export default function BattleTable({ sheets, onDeleteMission, onEditMission }: Props) {
   const navigate = useNavigate()
   const [sortColumn, setSortColumn] = useState<SortColumn>("name")
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc")
+  const [isSorting, setIsSorting] = useState(false)
 
   const sortedSheets = useMemo(() => {
     if (!sortColumn) return sheets
@@ -66,6 +70,14 @@ export default function BattleTable({ sheets, onDeleteMission }: Props) {
     return sorted
   }, [sheets, sortColumn, sortDirection])
 
+  useEffect(() => {
+    setIsSorting(true)
+    const timer = setTimeout(() => {
+      setIsSorting(false)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [sortColumn, sortDirection, sheets])
+
   function handleSort(column: SortColumn) {
     if (sortColumn === column) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc")
@@ -79,13 +91,13 @@ export default function BattleTable({ sheets, onDeleteMission }: Props) {
     const isActive = sortColumn === column
 
     if (!isActive) {
-      return <FiChevronUp className="text-gray-300 w-4 h-4" />
+      return <FiChevronUp className="text-gray-400 w-4 h-4" />
     }
 
     return sortDirection === "asc" ? (
-      <FiChevronUp className="text-gray-700 w-4 h-4" />
+      <FiChevronUp className="text-gray-900 w-4 h-4" />
     ) : (
-      <FiChevronDown className="text-gray-700 w-4 h-4" />
+      <FiChevronDown className="text-gray-900 w-4 h-4" />
     )
   }
 
@@ -102,11 +114,17 @@ export default function BattleTable({ sheets, onDeleteMission }: Props) {
                 location: "Local",
               }
               const colKey = col as SortColumn
+              const isActive = sortColumn === colKey
               return (
                 <th
                   key={col}
                   onClick={() => handleSort(colKey)}
-                  className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition-colors duration-200"
+                  className={`
+                    px-6 py-4 text-left text-xs font-bold uppercase tracking-wider cursor-pointer
+                    transition-colors duration-200 focus:outline-none focus:ring-0 focus:shadow-none
+                    ${isActive ? "bg-gray-200 text-gray-900" : "text-gray-700 hover:bg-gray-200"}
+                  `}
+                  style={{ outline: "none", boxShadow: "none" }}
                 >
                   <span className="inline-flex items-center gap-2">
                     {labelMap[col]}
@@ -115,13 +133,13 @@ export default function BattleTable({ sheets, onDeleteMission }: Props) {
                 </th>
               )
             })}
-            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider"/>
+            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider" colSpan={2} />
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-100">
+        <tbody className={`divide-y divide-gray-100 ${isSorting ? "animate-flash-sort" : ""}`}>
           {sheets.length === 0 ? (
             <tr>
-              <td colSpan={5} className="px-6 py-5 text-center text-gray-500 italic">
+              <td colSpan={6} className="px-6 py-5 text-center text-gray-500 italic">
                 Nenhuma missão encontrada. Clique em "Nova Missão" para começar!
               </td>
             </tr>
@@ -159,10 +177,20 @@ export default function BattleTable({ sheets, onDeleteMission }: Props) {
                 >
                   {sheet.location}
                 </td>
-                <td className="px-6 py-5">
+                <td className="px-6 py-5 text-right">
                   <button
                     onClick={(e) => {
-                      e.stopPropagation() // Impede a navegação da linha
+                      e.stopPropagation()
+                      onEditMission(sheet)
+                    }}
+                    className="text-blue-500 hover:text-blue-700 p-2 rounded-full hover:bg-blue-100 transition-colors duration-200 cursor-pointer mr-2"
+                    title="Editar Missão"
+                  >
+                    <FaEdit className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
                       onDeleteMission(sheet.id)
                     }}
                     className="text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-100 transition-colors duration-200 cursor-pointer"
@@ -179,6 +207,7 @@ export default function BattleTable({ sheets, onDeleteMission }: Props) {
     </div>
   )
 }
+
 
 
 
