@@ -1,7 +1,7 @@
 import type React from "react"
 
 import { useNavigate, useParams, useLocation } from "react-router-dom"
-import { FaChevronLeft, FaDiceD20, FaHome } from "react-icons/fa"
+import { FaChevronLeft, FaDiceD20, FaHome, FaPlus } from "react-icons/fa"
 import { useState } from "react"
 import { CalculateInitiativesModal } from "../components/Rounds-components/CalculateInitiativesModal"
 import type { Member, Round, InitiativeResult } from "../constants/rpg.data"
@@ -108,10 +108,11 @@ export default function AddRoundPage({ sheets, setSheets }: Props) {
         <div className="w-10" />
       </div>
 
-      <div className="flex justify-center mb-6">
+      {/* Botão Calcular Iniciativas alinhado à direita */}
+      <div className="flex justify-end mb-6">
         <button
           onClick={() => setIsInitiativeModalOpen(true)}
-          className="bg-purple-600 text-white px-5 py-2 sm:px-6 sm:py-3 rounded-lg text-base sm:text-lg font-semibold hover:bg-purple-700 transition-all duration-300 flex items-center gap-2 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+          className="bg-purple-600 text-white px-5 py-2 sm:px-6 sm:py-3 rounded-lg text-base sm:text-lg font-semibold hover:bg-purple-700 transition-all duration-300 flex items-center gap-2 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 cursor-pointer"
           disabled={team1Members.length === 0 && team2Members.length === 0}
           title={
             team1Members.length === 0 && team2Members.length === 0
@@ -125,58 +126,74 @@ export default function AddRoundPage({ sheets, setSheets }: Props) {
       </div>
 
       {initiativeOrder.length > 0 && (
-        <div className="bg-white p-3 sm:p-4 rounded-xl shadow-lg mt-6 border border-gray-200">
-          <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-gray-800 text-center">Ordem de Iniciativa</h3>
-          <ol className="space-y-2 sm:space-y-3">
-            {initiativeOrder.map((result, index) => (
-              <li
-                key={result.memberId}
-                className={`flex flex-col sm:flex-row items-center justify-between p-2 sm:p-3 rounded-lg shadow-sm transition-all duration-200
-                  ${
-                    result.teamName === team1Name
-                      ? "bg-blue-50 border-l-4 border-blue-500"
-                      : "bg-red-50 border-l-4 border-red-500"
-                  }
-                `}
-              >
-                <div className="flex items-center gap-1 sm:gap-2 mb-1 sm:mb-0">
-                  <span className="text-lg sm:text-xl font-extrabold text-gray-700 w-6 sm:w-7 text-center">
-                    {index + 1}.
-                  </span>
-                  <span className="font-semibold text-gray-900 text-sm sm:text-base">
-                    {result.name} (
-                    <span
-                      className="font-bold"
-                      style={{ color: result.teamName === team1Name ? "#2563EB" : "#DC2626" }}
-                    >
-                      {result.teamName}
+        <>
+          <div className="bg-white p-3 sm:p-4 rounded-xl shadow-lg mt-6 border border-gray-200">
+            <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-gray-800 text-center">Ordem de Iniciativa</h3>
+            <ol className="space-y-2 sm:space-y-3">
+              {initiativeOrder.map((result, index) => (
+                <li
+                  key={result.memberId}
+                  className={`flex flex-col sm:flex-row items-center justify-between p-2 sm:p-3 rounded-lg shadow-sm transition-all duration-200
+                ${
+                  result.teamName === team1Name
+                    ? "bg-blue-50 border-l-4 border-blue-500"
+                    : "bg-red-50 border-l-4 border-red-500"
+                }
+              `}
+                >
+                  <div className="flex items-center gap-1 sm:gap-2 mb-1 sm:mb-0">
+                    <span className="text-lg sm:text-xl font-extrabold text-gray-700 w-6 sm:w-7 text-center">
+                      {index + 1}.
                     </span>
-                    )
-                  </span>
-                </div>
-                <div className="text-gray-700 text-xs sm:text-sm flex items-center gap-1">
-                  Iniciativa:{" "}
-                  <span className="font-medium text-gray-800">
-                    {result.baseInitiative} <span className="text-gray-500">+</span> {result.diceRoll}
-                  </span>{" "}
-                  <span className="text-gray-500">=</span>{" "}
-                  <span className="font-extrabold text-base sm:text-lg text-purple-700">{result.totalInitiative}</span>
-                </div>
-              </li>
-            ))}
-          </ol>
-        </div>
-      )}
+                    <span className="font-semibold text-gray-900 text-sm sm:text-base">
+                      {result.name} (
+                      <span
+                        className="font-bold"
+                        style={{ color: result.teamName === team1Name ? "#2563EB" : "#DC2626" }}
+                      >
+                        {result.teamName}
+                      </span>
+                      )
+                    </span>
+                  </div>
+                  <div className="text-gray-700 text-xs sm:text-sm flex items-center gap-1">
+                    Iniciativa:{" "}
+                    <span className="font-medium text-gray-800">
+                      {result.baseInitiative} <span className="text-gray-500">(base)</span>{" "}
+                      <span className="text-gray-500">+</span> {result.diceRoll}{" "}
+                      <span className="text-gray-500">(dado)</span>
+                      {result.perkModifierApplied !== 0 && (
+                        <span className={`ml-1 ${result.perkModifierApplied > 0 ? "text-green-600" : "text-red-600"}`}>
+                          {result.perkModifierApplied > 0 ? "+" : ""}
+                          {result.perkModifierApplied}{" "}
+                          <span className="text-gray-500">
+                            ({result.perkModifierApplied > 0 ? "coragem" : "covardia"})
+                          </span>
+                        </span>
+                      )}
+                    </span>{" "}
+                    <span className="text-gray-500">=</span>{" "}
+                    <span className="font-extrabold text-base sm:text-lg text-purple-700">
+                      {result.totalInitiative}
+                    </span>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </div>
 
-      <div className="flex justify-center mt-6">
-        <button
-          onClick={handleAddRound}
-          className="bg-green-600 text-white px-6 py-3 sm:px-7 sm:py-3.5 rounded-lg text-lg sm:text-xl font-semibold hover:bg-green-700 transition-all duration-300 flex items-center gap-2 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
-          disabled={initiativeOrder.length === 0}
-        >
-          Adicionar Rodada
-        </button>
-      </div>
+          {/* Botão Adicionar Rodada aparece apenas se initiatives forem calculadas */}
+          <div className="flex justify-center mt-6">
+            <button
+              onClick={handleAddRound}
+              className="bg-green-600 text-white px-6 py-3 sm:px-7 sm:py-3.5 rounded-lg text-lg sm:text-xl font-semibold hover:bg-green-700 transition-all duration-300 flex items-center gap-2 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 cursor-pointer"
+            >
+              <FaPlus className="text-lg sm:text-xl" />
+              Adicionar Rodada
+            </button>
+          </div>
+        </>
+      )}
 
       <CalculateInitiativesModal
         isOpen={isInitiativeModalOpen}
@@ -190,6 +207,12 @@ export default function AddRoundPage({ sheets, setSheets }: Props) {
     </div>
   )
 }
+
+
+
+
+
+
 
 
 

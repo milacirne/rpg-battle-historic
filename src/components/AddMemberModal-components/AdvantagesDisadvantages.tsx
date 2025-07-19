@@ -2,7 +2,7 @@ import type React from "react"
 
 type AdvantageDisadvantageSelectorProps = {
   label: string
-  items: { name: string }[] 
+  items: { name: string }[]
   selectedItems: string[]
   setSelectedItems: React.Dispatch<React.SetStateAction<string[]>>
   teamColor: string
@@ -50,10 +50,9 @@ export function AdvantageDisadvantageSelector({
           </div>
         ))}
       </div>
-      {items.length === 0 && (
-        <p className="text-gray-500 text-sm italic">Nenhum item disponível para esta categoria.</p>
-      )}
+      {items.length === 0 && <p className="text-gray-500 text-sm italic">No items available for this category.</p>}
     </div>
   )
 }
+
 

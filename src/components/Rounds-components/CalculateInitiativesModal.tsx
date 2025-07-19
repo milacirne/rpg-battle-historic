@@ -1,14 +1,5 @@
-import { useState, useMemo } from "react"
-import type { Member } from "../../constants/rpg.data"
-
-type InitiativeResult = {
-  memberId: string
-  name: string
-  teamName: string
-  baseInitiative: number
-  diceRoll: number
-  totalInitiative: number
-}
+import { useState, useMemo, useEffect } from "react"
+import type { Member, InitiativeResult } from "../../constants/rpg.data"
 
 type CalculateInitiativesModalProps = {
   isOpen: boolean
@@ -30,21 +21,36 @@ export function CalculateInitiativesModal({
   team2Members,
 }: CalculateInitiativesModalProps) {
   const [diceRolls, setDiceRolls] = useState<Record<string, number>>({})
+  const [perkStates, setPerkStates] = useState<Record<string, { courage: boolean; cowardice: boolean }>>({})
 
-  useMemo(() => {
+  const allMembers = useMemo(() => {
+    return [
+      ...team1Members.map((m) => ({ ...m, teamName: team1Name, teamColor: "blue" })),
+      ...team2Members.map((m) => ({ ...m, teamName: team2Name, teamColor: "red" })),
+    ]
+  }, [team1Members, team2Members, team1Name, team2Name])
+
+  const initialValues = useMemo(() => {
     const initialRolls: Record<string, number> = {}
-    ;[...team1Members, ...team2Members].forEach((member) => {
+    const initialPerkStates: Record<string, { courage: boolean; cowardice: boolean }> = {}
+    allMembers.forEach((member) => {
       initialRolls[member.id] = 1
+      initialPerkStates[member.id] = {
+        courage: false,
+        cowardice: false,
+      }
     })
-    setDiceRolls(initialRolls)
-  }, [team1Members, team2Members])
+    return { initialRolls, initialPerkStates }
+  }, [allMembers])
+
+  useEffect(() => {
+    if (isOpen) {
+      setDiceRolls(initialValues.initialRolls)
+      setPerkStates(initialValues.initialPerkStates)
+    }
+  }, [isOpen, initialValues])
 
   if (!isOpen) return null
-
-  const allMembers = [
-    ...team1Members.map((m) => ({ ...m, teamName: team1Name, teamColor: "blue" })),
-    ...team2Members.map((m) => ({ ...m, teamName: team2Name, teamColor: "red" })),
-  ]
 
   const handleDiceRollChange = (memberId: string, value: string) => {
     const numValue = Number.parseInt(value, 10)
@@ -55,17 +61,37 @@ export function CalculateInitiativesModal({
     }
   }
 
+  const handlePerkToggle = (memberId: string, perkType: "courage" | "cowardice") => {
+    setPerkStates((prev) => ({
+      ...prev,
+      [memberId]: {
+        ...prev[memberId],
+        [perkType]: !prev[memberId]?.[perkType],
+      },
+    }))
+  }
+
   const calculateAndSortInitiatives = () => {
     const results: InitiativeResult[] = allMembers.map((member) => {
       const baseInitiative = member.agility + member.perception
       const roll = diceRolls[member.id] || 0
-      const totalInitiative = baseInitiative + roll
+
+      let perkMod = 0
+      if (perkStates[member.id]?.courage) {
+        perkMod += 10
+      }
+      if (perkStates[member.id]?.cowardice) {
+        perkMod -= 10
+      }
+
+      const totalInitiative = baseInitiative + roll + perkMod
       return {
         memberId: member.id,
         name: member.name,
         teamName: member.teamName,
         baseInitiative,
         diceRoll: roll,
+        perkModifierApplied: perkMod,
         totalInitiative,
       }
     })
@@ -109,43 +135,83 @@ export function CalculateInitiativesModal({
             <p className="text-gray-500 text-center py-8">Nenhum personagem adicionado às equipes.</p>
           ) : (
             <div className="grid grid-cols-1 gap-4">
-              {allMembers.map((member) => (
-                <div
-                  key={member.id}
-                  className="flex flex-col sm:flex-row items-center justify-between bg-white p-4 rounded-lg shadow-sm border border-gray-200"
-                >
-                  <div className="flex-1 text-center sm:text-left mb-3 sm:mb-0">
-                    <h3 className="font-bold text-gray-900 text-lg sm:text-xl">{member.name}</h3>
-                    <p
-                      className={`text-sm font-medium mt-1`}
-                      style={{ color: member.teamColor === "blue" ? "#2563EB" : "#DC2626" }}
-                    >
-                      Equipe: {member.teamName}
-                    </p>
-                    <p className="text-xs sm:text-sm text-gray-600 mt-1">
-                      Iniciativa Base: {member.agility + member.perception}
-                    </p>
+              {allMembers.map((member) => {
+                const hasCourage = (member.perks || []).includes("Coragem")
+                const hasCowardice = (member.hindrances || []).includes("Covardia")
+
+                return (
+                  <div
+                    key={member.id}
+                    className="flex flex-col sm:flex-row items-center justify-between bg-white p-4 rounded-lg shadow-sm border border-gray-200"
+                  >
+                    <div className="flex-1 text-center sm:text-left mb-3 sm:mb-0">
+                      <h3 className="font-bold text-gray-900 text-lg sm:text-xl">{member.name}</h3>
+                      <p
+                        className={`text-sm font-medium mt-1`}
+                        style={{ color: member.teamColor === "blue" ? "#2563EB" : "#DC2626" }}
+                      >
+                        Equipe: {member.teamName}
+                      </p>
+                      <p className="text-xs sm:text-sm text-gray-600 mt-1">
+                        Iniciativa Base: {member.agility + member.perception}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {hasCourage && (
+                        <div className="flex items-center">
+                          <input
+                            type="checkbox"
+                            id={`courage-${member.id}`}
+                            checked={perkStates[member.id]?.courage || false}
+                            onChange={() => handlePerkToggle(member.id, "courage")}
+                            className="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500 cursor-pointer"
+                            style={{ accentColor: "#22C55E" }}
+                          />
+                          <label htmlFor={`courage-${member.id}`} className="ml-2 text-sm text-gray-700">
+                            Coragem (+10)
+                          </label>
+                        </div>
+                      )}
+                      {hasCowardice && (
+                        <div className="flex items-center">
+                          <input
+                            type="checkbox"
+                            id={`cowardice-${member.id}`}
+                            checked={perkStates[member.id]?.cowardice || false}
+                            onChange={() => handlePerkToggle(member.id, "cowardice")}
+                            className="h-4 w-4 text-red-600 border-gray-300 rounded focus:ring-red-500 cursor-pointer"
+                            style={{ accentColor: "#EF4444" }}
+                          />
+                          <label htmlFor={`cowardice-${member.id}`} className="ml-2 text-sm text-gray-700">
+                            Covardia (-10)
+                          </label>
+                        </div>
+                      )}
+                      <label htmlFor={`dice-roll-${member.id}`} className="sr-only">
+                        Dado para {member.name}
+                      </label>
+                      <input
+                        id={`dice-roll-${member.id}`}
+                        type="number"
+                        min="1"
+                        max="20"
+                        value={diceRolls[member.id] === 0 ? "" : diceRolls[member.id]}
+                        onChange={(e) => handleDiceRollChange(member.id, e.target.value)}
+                        placeholder="D20"
+                        className="w-20 sm:w-24 border border-gray-300 rounded-md px-3 py-2 text-center text-lg sm:text-xl font-bold focus:ring-purple-500 focus:border-purple-500 transition-colors"
+                      />
+                      <span className="text-xl sm:text-2xl font-extrabold text-purple-700">
+                        ={" "}
+                        {member.agility +
+                          member.perception +
+                          (diceRolls[member.id] || 0) +
+                          (perkStates[member.id]?.courage ? 10 : 0) +
+                          (perkStates[member.id]?.cowardice ? -10 : 0)}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <label htmlFor={`dice-roll-${member.id}`} className="sr-only">
-                      Dado para {member.name}
-                    </label>
-                    <input
-                      id={`dice-roll-${member.id}`}
-                      type="number"
-                      min="1"
-                      max="20"
-                      value={diceRolls[member.id] === 0 ? "" : diceRolls[member.id]}
-                      onChange={(e) => handleDiceRollChange(member.id, e.target.value)}
-                      placeholder="D20"
-                      className="w-20 sm:w-24 border border-gray-300 rounded-md px-3 py-2 text-center text-lg sm:text-xl font-bold focus:ring-purple-500 focus:border-purple-500 transition-colors"
-                    />
-                    <span className="text-xl sm:text-2xl font-extrabold text-purple-700">
-                      = {member.agility + member.perception + (diceRolls[member.id] || 0)}
-                    </span>
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>
@@ -180,5 +246,8 @@ export function CalculateInitiativesModal({
     </div>
   )
 }
+
+
+
 
 

@@ -56,17 +56,12 @@ export default function App() {
     <Routes>
       <Route path="/" element={<MainPage sheets={sheets} setSheets={setSheets} />} />
       <Route path="/missao/:id" element={<MissionPage sheets={sheets} setSheets={setSheets} />} />
-      <Route
-        path="/missao/:id/adicionar-rodada"
-        element={<AddRoundPage sheets={sheets} setSheets={setSheets} />}
-      />
-      <Route
-        path="/missao/:id/rodadas"
-        element={<ViewRoundsPage sheets={sheets} setSheets={setSheets} />}
-      />
+      <Route path="/missao/:id/adicionar-rodada" element={<AddRoundPage sheets={sheets} setSheets={setSheets} />} />
+      <Route path="/missao/:id/rodadas" element={<ViewRoundsPage sheets={sheets} setSheets={setSheets} />} />
     </Routes>
   )
 }
+
 
 
 

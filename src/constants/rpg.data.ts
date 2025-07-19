@@ -29,6 +29,8 @@ export type Member = {
   }
   peculiarities?: string[]
   trejeitos?: string[]
+  perks?: string[]
+  hindrances?: string[]
   derivedGlobalSkillEffects?: GlobalSkillEffect[]
   divineParentUserSpecializations?: Record<string, string>
   abilities: string[]
@@ -127,6 +129,8 @@ export type AccordionState = {
   trejeitos: boolean
   abilities: boolean
   disabilities: boolean
+  perks: boolean
+  hindrances: boolean
 }
 
 export type SkillEffect = {
@@ -142,6 +146,16 @@ export type PeculiarityData = {
 export type TrejeitoData = {
   name: string
   effects: SkillEffect[]
+}
+
+export type PerkData = {
+  name: string
+  description: string
+}
+
+export type HindranceData = {
+  name: string
+  description: string
 }
 
 export type GlobalSkillEffect = {
@@ -382,6 +396,14 @@ export const allTrejeitos: TrejeitoData[] = [
   { name: "Conservador", effects: [{ skill: "Conhecimento", value: -2 }] },
   { name: "Relapso", effects: [{ skill: "Ofícios", value: -2 }] },
   { name: "Barbeiro", effects: [{ skill: "Condução", value: -2 }] },
+]
+
+export const allPerks: PerkData[] = [
+  { name: "Coragem", description: "Em situações de perigo, o personagem receberá +10 em Iniciativa." },
+]
+
+export const allHindrances: HindranceData[] = [
+  { name: "Covardia", description: "Em situações de perigo, o personagem receberá -10 em Iniciativa." },
 ]
 
 export type DivineSkillEffect = {
@@ -1059,18 +1081,18 @@ export type InitiativeResult = {
   teamName: string
   baseInitiative: number
   diceRoll: number
+  perkModifierApplied: number
   totalInitiative: number
 }
 
 export type Round = {
   id: string
-  name: string // e.g., "Rodada 1"
+  name: string
   initiativeOrder: InitiativeResult[]
-  createdAt: string // Timestamp for sorting
+  createdAt: string
 }
 
 export type BattleSheet = {
-  // Exported BattleSheet
   id: string
   name: string
   type: RPType
@@ -1084,6 +1106,8 @@ export type BattleSheet = {
 }
 
 type RPType = "Oficial" | "Semi-Oficial" | "Livre"
+
+
 
 
 

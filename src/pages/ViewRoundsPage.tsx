@@ -31,8 +31,6 @@ export default function ViewRoundsPage({ sheets }: Props) {
         } else {
           setCurrentRoundIndex(rounds.length - 1)
         }
-      } else {
-        setCurrentRoundIndex(rounds.length - 1)
       }
     } else {
       setCurrentRoundIndex(0)
@@ -123,12 +121,12 @@ export default function ViewRoundsPage({ sheets }: Props) {
                 <li
                   key={result.memberId}
                   className={`flex flex-col sm:flex-row items-center justify-between p-2 sm:p-3 rounded-lg shadow-sm transition-all duration-200
-                  ${
-                    result.teamName === team1Name
-                      ? "bg-blue-50 border-l-4 border-blue-500"
-                      : "bg-red-50 border-l-4 border-red-500"
-                  }
-                `}
+                ${
+                  result.teamName === team1Name
+                    ? "bg-blue-50 border-l-4 border-blue-500"
+                    : "bg-red-50 border-l-4 border-red-500"
+                }
+              `}
                 >
                   <div className="flex items-center gap-1 sm:gap-2 mb-1 sm:mb-0">
                     <span className="text-lg sm:text-xl font-extrabold text-gray-700 w-6 sm:w-7 text-center">
@@ -155,7 +153,18 @@ export default function ViewRoundsPage({ sheets }: Props) {
                   <div className="text-gray-700 text-xs sm:text-sm flex items-center gap-1">
                     Iniciativa:{" "}
                     <span className="font-medium text-gray-800">
-                      {result.baseInitiative} <span className="text-gray-500">+</span> {result.diceRoll}
+                      {result.baseInitiative} <span className="text-gray-500">(base)</span>{" "}
+                      <span className="text-gray-500">+</span> {result.diceRoll}{" "}
+                      <span className="text-gray-500">(dados)</span>
+                      {result.perkModifierApplied !== 0 && (
+                        <span className={`ml-1 ${result.perkModifierApplied > 0 ? "text-green-600" : "text-red-600"}`}>
+                          {result.perkModifierApplied > 0 ? "+" : ""}
+                          {result.perkModifierApplied}{" "}
+                          <span className="text-gray-500">
+                            ({result.perkModifierApplied > 0 ? "coragem" : "covardia"})
+                          </span>
+                        </span>
+                      )}
                     </span>{" "}
                     <span className="text-gray-500">=</span>{" "}
                     <span className="font-extrabold text-base sm:text-lg text-purple-700">
@@ -177,6 +186,9 @@ export default function ViewRoundsPage({ sheets }: Props) {
     </div>
   )
 }
+
+
+
 
 
 

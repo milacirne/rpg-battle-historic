@@ -6,6 +6,8 @@ import type {
   GlobalSkillEffect,
   SpecializationCategory,
   AccordionState,
+  PerkData,
+  HindranceData,
 } from "../constants/rpg.data"
 import {
   allPeculiarities,
@@ -17,6 +19,8 @@ import {
   complementarySkills,
   abilities,
   disabilities,
+  allPerks,
+  allHindrances,
 } from "../constants/rpg.data"
 import { AccordionSection } from "./AddMemberModal-components/AccordionSection"
 
@@ -47,6 +51,8 @@ export default function MemberInfoModal({ member, onClose }: Props) {
     disadvantages: false,
     disabilities: false,
     trejeitos: false,
+    perks: false,
+    hindrances: false,
   })
 
   const derivedGlobalSkillEffects = member.derivedGlobalSkillEffects || []
@@ -248,12 +254,14 @@ export default function MemberInfoModal({ member, onClose }: Props) {
   function renderAdvantageDisadvantageSection(
     title: string,
     selectedNames: string[],
-    allItems: (PeculiarityData | TrejeitoData)[],
+    allItems: (PeculiarityData | TrejeitoData | PerkData | HindranceData)[],
     emptyMessage: string,
   ) {
     const itemsToDisplay = selectedNames.map((name) => allItems.find((item) => item.name === name)).filter(Boolean) as (
       | PeculiarityData
       | TrejeitoData
+      | PerkData
+      | HindranceData
     )[]
 
     return (
@@ -264,6 +272,9 @@ export default function MemberInfoModal({ member, onClose }: Props) {
             {itemsToDisplay.map((item) => (
               <div key={item.name} className="bg-white rounded px-2 py-1 text-xs sm:text-sm break-words">
                 <span className="font-medium text-gray-700">{item.name}</span>
+                {"description" in item && item.description && (
+                  <p className="text-gray-500 text-xs mt-1">{item.description}</p>
+                )}
               </div>
             ))}
           </div>
@@ -488,6 +499,14 @@ export default function MemberInfoModal({ member, onClose }: Props) {
                   "Nenhuma peculiaridade selecionada.",
                 )}
               </AccordionSection>
+              {/* New AccordionSection for Regalias */}
+              <AccordionSection
+                title="Regalias"
+                open={accordion.perks}
+                onToggle={() => setAccordion((prev) => ({ ...prev, perks: !prev.perks }))}
+              >
+                {renderAdvantageDisadvantageSection("", member.perks || [], allPerks, "Nenhuma regalia selecionada.")}
+              </AccordionSection>
             </AccordionSection>
             <AccordionSection
               title="Desvantagens"
@@ -513,6 +532,19 @@ export default function MemberInfoModal({ member, onClose }: Props) {
                   "Nenhum trejeito selecionado.",
                 )}
               </AccordionSection>
+              {/* New AccordionSection for Obstaculos */}
+              <AccordionSection
+                title="Obstáculos"
+                open={accordion.hindrances}
+                onToggle={() => setAccordion((prev) => ({ ...prev, hindrances: !prev.hindrances }))}
+              >
+                {renderAdvantageDisadvantageSection(
+                  "",
+                  member.hindrances || [],
+                  allHindrances,
+                  "Nenhum obstáculo selecionado.",
+                )}
+              </AccordionSection>
             </AccordionSection>
           </div>
         </div>
@@ -529,6 +561,8 @@ export default function MemberInfoModal({ member, onClose }: Props) {
     </div>
   )
 }
+
+
 
 
 

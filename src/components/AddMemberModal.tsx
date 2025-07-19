@@ -1,30 +1,31 @@
 import type React from "react"
 
-import { useState, useEffect, useMemo } from "react"
-import { AttributeInput } from "./AddMemberModal-components/AttributeInput"
-import { AccordionSection } from "./AddMemberModal-components/AccordionSection"
-import { SkillCategoryInput } from "./AddMemberModal-components/SkillCategoryInput"
-import { SpecializationCategoryInput } from "./AddMemberModal-components/SpecializationCategoryInput"
-import { AddMemberModalLayout } from "./AddMemberModal-components/AddMemberModalLayout"
-import { AdvantageDisadvantageSelector } from "./AddMemberModal-components/AdvantagesDisadvantages"
+import { useState, useEffect } from "react"
+import { v4 as uuidv4 } from "uuid"
+import type { Member, SpecializationCategory, AccordionState } from "../constants/rpg.data"
 import {
-  type Member,
-  type SpecializationCategory,
-  type AccordionState,
   allPowers,
   allStyles,
   combatSkills,
   socialSkills,
   utilitySkills,
   complementarySkills,
-  specializationCategories,
+  allDivineParents,
   allPeculiarities,
   allTrejeitos,
-  calculateFinalSkills,
-  allDivineParents,
+  allPerks,
+  allHindrances,
   abilities,
   disabilities,
+  calculateFinalSkills,
 } from "../constants/rpg.data"
+
+import { AddMemberModalLayout } from "./AddMemberModal-components/AddMemberModalLayout"
+import { AttributeInput } from "./AddMemberModal-components/AttributeInput"
+import { SkillCategoryInput } from "./AddMemberModal-components/SkillCategoryInput"
+import { SpecializationCategoryInput } from "./AddMemberModal-components/SpecializationCategoryInput"
+import { AdvantageDisadvantageSelector } from "./AddMemberModal-components/AdvantagesDisadvantages"
+import { AccordionSection } from "./AddMemberModal-components/AccordionSection"
 
 type Props = {
   teamName: string
@@ -34,28 +35,37 @@ type Props = {
   editingMember?: Member | null
 }
 
-export default function AddMemberModal({ teamName, teamColor, onClose, onAddMember, editingMember = null }: Props) {
-  const [name, setName] = useState("")
-  const [type, setType] = useState<"semideus" | "humano" | "monstro">("semideus")
-  const [divineParent, setDivineParent] = useState("")
-  const [divineParentUserSpecializations, setDivineParentUserSpecializations] = useState<Record<string, string>>({})
-  const [force, setForce] = useState(0)
-  const [determination, setDetermination] = useState(0)
-  const [agility, setAgility] = useState(0)
-  const [wisdom, setWisdom] = useState(0)
-  const [perception, setPerception] = useState(0)
-  const [dexterity, setDexterity] = useState(0)
-  const [vigor, setVigor] = useState(0)
-  const [charisma, setCharisma] = useState(0)
-  const [powers, setPowers] = useState<Record<string, number>>({})
-  const [styles, setStyles] = useState<Record<string, number>>({})
-  const [selectedAbilities, setSelectedAbilities] = useState<string[]>([])
-  const [selectedDisabilities, setSelectedDisabilities] = useState<string[]>([])
+export default function AddMemberModal({ teamName, teamColor, onClose, onAddMember, editingMember }: Props) {
+  const isEditing = !!editingMember
 
-  const [combat, setCombat] = useState<Record<string, number>>({})
-  const [social, setSocial] = useState<Record<string, number>>({})
-  const [utility, setUtility] = useState<Record<string, number>>({})
-  const [complementary, setComplementary] = useState<Record<string, number>>({})
+  const [name, setName] = useState(editingMember?.name || "")
+  const [type, setType] = useState<"semideus" | "humano" | "monstro">(editingMember?.type || "semideus")
+  const [divineParent, setDivineParent] = useState(editingMember?.divineParent || "")
+
+  const [force, setForce] = useState(editingMember?.force || 1)
+  const [determination, setDetermination] = useState(editingMember?.determination || 1)
+  const [agility, setAgility] = useState(editingMember?.agility || 1)
+  const [wisdom, setWisdom] = useState(editingMember?.wisdom || 1)
+  const [perception, setPerception] = useState(editingMember?.perception || 1)
+  const [dexterity, setDexterity] = useState(editingMember?.dexterity || 1)
+  const [vigor, setVigor] = useState(editingMember?.vigor || 1)
+  const [charisma, setCharisma] = useState(editingMember?.charisma || 1)
+
+  const [powers, setPowers] = useState<Record<string, number>>(editingMember?.powers || {})
+  const [styles, setStyles] = useState<Record<string, number>>(editingMember?.styles || {})
+
+  const [combatSkillsState, setCombatSkillsState] = useState<Record<string, number>>(
+    editingMember?.baseSkills?.combat || {},
+  )
+  const [socialSkillsState, setSocialSkillsState] = useState<Record<string, number>>(
+    editingMember?.baseSkills?.social || {},
+  )
+  const [utilitySkillsState, setUtilitySkillsState] = useState<Record<string, number>>(
+    editingMember?.baseSkills?.utility || {},
+  )
+  const [complementarySkillsState, setComplementarySkillsState] = useState<Record<string, number>>(
+    editingMember?.baseSkills?.complementary || {},
+  )
 
   const [specialization, setSpecialization] = useState<{
     languages: Record<string, number>
@@ -64,16 +74,18 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
     driving: Record<string, number>
     crafts: Record<string, number>
     sports: Record<string, number>
-  }>({
-    languages: {},
-    arts: {},
-    knowledge: {},
-    driving: {},
-    crafts: {},
-    sports: {},
-  })
+  }>(
+    editingMember?.baseSkills?.specialization || {
+      languages: {},
+      arts: {},
+      knowledge: {},
+      driving: {},
+      crafts: {},
+      sports: {},
+    },
+  )
 
-  const [newSpecializationInputs, setNewSpecializationInputs] = useState<Record<SpecializationCategory, string>>({
+  const [newSpecializationInput, setNewSpecializationInput] = useState<Record<SpecializationCategory, string>>({
     languages: "",
     arts: "",
     knowledge: "",
@@ -82,9 +94,20 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
     sports: "",
   })
 
-  const [selectedPeculiarities, setSelectedPeculiarities] = useState<string[]>([])
-  const [selectedTrejeitos, setSelectedTrejeitos] = useState<string[]>([])
-  const [conductionBonuses, setConductionBonuses] = useState<Record<string, boolean>>({})
+  const [selectedPeculiarities, setSelectedPeculiarities] = useState<string[]>(editingMember?.peculiarities || [])
+  const [selectedTrejeitos, setSelectedTrejeitos] = useState<string[]>(editingMember?.trejeitos || [])
+  const [selectedPerks, setSelectedPerks] = useState<string[]>(editingMember?.perks || [])
+  const [selectedHindrances, setSelectedHindrances] = useState<string[]>(editingMember?.hindrances || [])
+  const [selectedAbilities, setSelectedAbilities] = useState<string[]>(editingMember?.abilities || [])
+  const [selectedDisabilities, setSelectedDisabilities] = useState<string[]>(editingMember?.disabilities || [])
+
+  const [divineParentUserSpecializations, setDivineParentUserSpecializations] = useState<Record<string, string>>(
+    editingMember?.divineParentUserSpecializations || {},
+  )
+
+  const [conductionBonuses, setConductionBonuses] = useState<Record<string, boolean>>(
+    editingMember?.conductionBonuses || {},
+  )
 
   const [accordion, setAccordion] = useState<AccordionState>({
     powers: false,
@@ -102,139 +125,51 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
     crafts: false,
     sports: false,
     advantages: false,
+    abilities: false,
     peculiarities: false,
     disadvantages: false,
-    trejeitos: false,
-    abilities: false,
     disabilities: false,
+    trejeitos: false,
+    perks: false,
+    hindrances: false,
   })
 
-  useEffect(() => {
-    if (editingMember) {
-      setName(editingMember.name)
-      setType(editingMember.type)
-      setDivineParent(editingMember.divineParent || "")
-      setDivineParentUserSpecializations(editingMember.divineParentUserSpecializations || {})
-      setForce(editingMember.force)
-      setDetermination(editingMember.determination)
-      setAgility(editingMember.agility)
-      setWisdom(editingMember.wisdom)
-      setPerception(editingMember.perception)
-      setDexterity(editingMember.dexterity)
-      setVigor(editingMember.vigor)
-      setCharisma(editingMember.charisma)
-      setPowers(editingMember.powers || {})
-      setStyles(editingMember.styles || {})
-      setCombat(editingMember.baseSkills?.combat || {})
-      setSocial(editingMember.baseSkills?.social || {})
-      setUtility(editingMember.baseSkills?.utility || {})
-      setComplementary(editingMember.baseSkills?.complementary || {})
-      setSpecialization(
-        editingMember.baseSkills?.specialization || {
-          languages: {},
-          arts: {},
-          knowledge: {},
-          driving: {},
-          crafts: {},
-          sports: {},
-        },
-      )
-      setSelectedPeculiarities(editingMember.peculiarities || [])
-      setSelectedTrejeitos(editingMember.trejeitos || [])
-      setSelectedAbilities(editingMember.abilities || [])
-      setSelectedDisabilities(editingMember.disabilities || [])
-      setConductionBonuses(editingMember.conductionBonuses || {})
-    } else {
-      setName("")
-      setType("semideus")
-      setDivineParent("")
-      setDivineParentUserSpecializations({})
-      setForce(0)
-      setDetermination(0)
-      setAgility(0)
-      setWisdom(0)
-      setPerception(0)
-      setDexterity(0)
-      setVigor(0)
-      setCharisma(0)
-      setPowers({})
-      setStyles({})
-      setCombat({})
-      setSocial({})
-      setUtility({})
-      setComplementary({})
-      setSpecialization({
-        languages: {},
-        arts: {},
-        knowledge: {},
-        driving: {},
-        crafts: {},
-        sports: {},
-      })
-      setSelectedPeculiarities([])
-      setSelectedTrejeitos([])
-      setConductionBonuses({})
-    }
-    setNewSpecializationInputs({
-      languages: "",
-      arts: "",
-      knowledge: "",
-      driving: "",
-      crafts: "",
-      sports: "",
-    })
-  }, [editingMember])
+  // Estados separados para sub-accordions de vantagens e desvantagens
+  const [advantagesSubAccordion, setAdvantagesSubAccordion] = useState(false)
+  const [disadvantagesSubAccordion, setDisadvantagesSubAccordion] = useState(false)
 
-  const divineParentEffectsRequiringInput = useMemo(() => {
-    if (type !== "semideus" || !divineParent) return []
-    const selectedParent = allDivineParents.find((dp) => dp.name === divineParent)
-    return selectedParent?.effects.filter((effect) => effect.requiresUserInput && !effect.isAutoApplied) || []
-  }, [type, divineParent])
+  const selectedDivineParentData = allDivineParents.find((dp) => dp.name === divineParent)
+
+  useEffect(() => {
+    if (selectedDivineParentData) {
+      const newUserSpecializations: Record<string, string> = {}
+      selectedDivineParentData.effects.forEach((effect) => {
+        if (effect.requiresUserInput && !divineParentUserSpecializations[effect.skillName]) {
+          newUserSpecializations[effect.skillName] = ""
+        }
+      })
+      setDivineParentUserSpecializations((prev) => ({ ...prev, ...newUserSpecializations }))
+    }
+  }, [divineParent, selectedDivineParentData, divineParentUserSpecializations])
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
 
     if (!name.trim()) {
-      alert("Preencha o nome do personagem.")
+      alert("Nome é obrigatório")
       return
     }
+
     if (type === "semideus" && !divineParent) {
-      alert("Selecione a filiação divina para semideuses.")
+      alert("Selecione um pai/mãe divino(a)")
       return
     }
 
-    for (const effect of divineParentEffectsRequiringInput) {
-      if (!divineParentUserSpecializations[effect.skillName]?.trim()) {
-        alert(`Por favor, especifique a perícia para "${effect.skillName}" da sua filiação divina.`)
-        return
-      }
-    }
-
-    const attributeNameMap: Record<string, string> = {
-      force: "Força",
-      determination: "Determinação",
-      agility: "Agilidade",
-      wisdom: "Sabedoria",
-      perception: "Percepção",
-      dexterity: "Destreza",
-      vigor: "Vigor",
-      charisma: "Carisma",
-    }
-
-    const attributes = { force, determination, agility, wisdom, perception, dexterity, vigor, charisma }
-    const missingAttributes = Object.entries(attributes).filter(([, value]) => value === 0)
-
-    if (missingAttributes.length > 0) {
-      const missingNames = missingAttributes.map(([name]) => attributeNameMap[name] || name).join(", ")
-      alert(`Por favor, preencha todos os atributos. Atributos faltando: ${missingNames}.`)
-      return
-    }
-
-    const { globalEffects } = calculateFinalSkills(
-      combat,
-      social,
-      utility,
-      complementary,
+    const { skills, globalEffects } = calculateFinalSkills(
+      combatSkillsState,
+      socialSkillsState,
+      utilitySkillsState,
+      complementarySkillsState,
       specialization,
       selectedPeculiarities,
       selectedTrejeitos,
@@ -243,10 +178,11 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
       conductionBonuses,
     )
 
-    const memberToSave: Member = {
-      id: editingMember ? editingMember.id : crypto.randomUUID(),
+    const member: Member = {
+      id: editingMember?.id || uuidv4(),
       name: name.trim(),
       type,
+      divineParent: type === "semideus" ? divineParent : undefined,
       force,
       determination,
       agility,
@@ -257,75 +193,72 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
       charisma,
       powers,
       styles,
-      baseSkills: {
-        combat,
-        social,
-        utility,
-        complementary,
-        specialization,
-      },
+      baseSkills: skills,
       peculiarities: selectedPeculiarities,
       trejeitos: selectedTrejeitos,
-      derivedGlobalSkillEffects: globalEffects,
-      divineParentUserSpecializations: divineParentUserSpecializations,
+      perks: selectedPerks,
+      hindrances: selectedHindrances,
       abilities: selectedAbilities,
       disabilities: selectedDisabilities,
-      conductionBonuses: conductionBonuses,
+      derivedGlobalSkillEffects: globalEffects,
+      divineParentUserSpecializations,
+      conductionBonuses,
     }
 
-    if (type === "semideus") memberToSave.divineParent = divineParent.trim()
-    onAddMember(memberToSave)
-    onClose()
+    onAddMember(member)
   }
 
   return (
     <AddMemberModalLayout
-      title={editingMember ? "Editar personagem" : "Adicionar personagem"}
+      title={isEditing ? "Editar membro" : "Adicionar membro"}
       teamName={teamName}
       teamColor={teamColor}
       onClose={onClose}
       onSubmit={handleSubmit}
-      isEditing={!!editingMember}
+      isEditing={isEditing}
     >
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">Nome</label>
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-            required
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">Tipo</label>
-          <select
-            value={type}
-            onChange={(e) => setType(e.target.value as "semideus" | "humano" | "monstro")}
-            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-          >
-            <option value="semideus">Semideus</option>
-            <option value="humano">Humano</option>
-            <option value="monstro">Monstro</option>
-          </select>
-        </div>
-      </div>
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label className="block text-sm font-semibold text-gray-700">
+              Nome <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              required
+            />
+          </div>
 
-      {type === "semideus" && (
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Filiação divina</label>
+          <div className="space-y-2">
+            <label className="block text-sm font-semibold text-gray-700">
+              Tipo <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={type}
+              onChange={(e) => setType(e.target.value as "semideus" | "humano" | "monstro")}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors cursor-pointer"
+            >
+              <option value="semideus">Semideus</option>
+              <option value="humano">Humano</option>
+              <option value="monstro">Monstro</option>
+            </select>
+          </div>
+        </div>
+
+        {type === "semideus" && (
+          <div className="space-y-2">
+            <label className="block text-sm font-semibold text-gray-700">
+              Pai/Mãe Divino(a) <span className="text-red-500">*</span>
+            </label>
             <select
               value={divineParent}
-              onChange={(e) => {
-                setDivineParent(e.target.value)
-                setDivineParentUserSpecializations({})
-                setConductionBonuses({})
-              }}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-              required={type === "semideus"}
+              onChange={(e) => setDivineParent(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors cursor-pointer"
             >
-              <option value="">Selecionar</option>
+              <option value="">Selecione...</option>
               {allDivineParents.map((dp) => (
                 <option key={dp.name} value={dp.name}>
                   {dp.name}
@@ -333,238 +266,281 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
               ))}
             </select>
           </div>
+        )}
 
-          {divineParentEffectsRequiringInput.length > 0 && (
-            <div className="bg-gray-50 rounded-xl p-4">
-              <h4 className="text-lg font-semibold text-gray-800 mb-4">Especializações da Filiação Divina</h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {divineParentEffectsRequiringInput.map((effect) => (
-                  <div key={effect.skillName}>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">{effect.skillName}:</label>
-                    <input
-                      type="text"
-                      value={divineParentUserSpecializations[effect.skillName] || ""}
-                      onChange={(e) =>
-                        setDivineParentUserSpecializations((prev) => ({
-                          ...prev,
-                          [effect.skillName]: e.target.value,
-                        }))
-                      }
-                      placeholder={effect.userInputPlaceholder}
-                      className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                      required
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      <div className="bg-gray-50 rounded-xl p-4">
-        <h4 className="text-lg font-semibold text-gray-800 mb-4">Atributos</h4>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-          <AttributeInput label="Força" value={force} setValue={setForce} teamColor={teamColor} required={true} />
-          <AttributeInput
-            label="Determinação"
-            value={determination}
-            setValue={setDetermination}
-            teamColor={teamColor}
-            required={true}
-          />
-          <AttributeInput
-            label="Agilidade"
-            value={agility}
-            setValue={setAgility}
-            teamColor={teamColor}
-            required={true}
-          />
-          <AttributeInput label="Sabedoria" value={wisdom} setValue={setWisdom} teamColor={teamColor} required={true} />
-          <AttributeInput
-            label="Percepção"
-            value={perception}
-            setValue={setPerception}
-            teamColor={teamColor}
-            required={true}
-          />
-          <AttributeInput
-            label="Destreza"
-            value={dexterity}
-            setValue={setDexterity}
-            teamColor={teamColor}
-            required={true}
-          />
-          <AttributeInput label="Vigor" value={vigor} setValue={setVigor} teamColor={teamColor} required={true} />
-          <AttributeInput
-            label="Carisma"
-            value={charisma}
-            setValue={setCharisma}
-            teamColor={teamColor}
-            required={true}
-          />
-        </div>
-      </div>
-
-      <AccordionSection
-        title="Poderes"
-        open={accordion.powers}
-        onToggle={() => setAccordion((prev: AccordionState) => ({ ...prev, powers: !prev.powers }))}
-      >
-        <SkillCategoryInput skills={allPowers} values={powers} setValues={setPowers} teamColor={teamColor} />
-      </AccordionSection>
-
-      <AccordionSection
-        title="Estilos"
-        open={accordion.styles}
-        onToggle={() => setAccordion((prev: AccordionState) => ({ ...prev, styles: !prev.styles }))}
-      >
-        <SkillCategoryInput skills={allStyles} values={styles} setValues={setStyles} teamColor={teamColor} />
-      </AccordionSection>
-
-      <AccordionSection
-        title="Perícias"
-        open={accordion.skills}
-        onToggle={() => setAccordion((prev: AccordionState) => ({ ...prev, skills: !prev.skills }))}
-      >
-        <div className="space-y-4">
-          <AccordionSection
-            title="Combate"
-            open={accordion.combat}
-            onToggle={() => setAccordion((prev: AccordionState) => ({ ...prev, combat: !prev.combat }))}
-          >
-            <SkillCategoryInput skills={combatSkills} values={combat} setValues={setCombat} teamColor={teamColor} />
-          </AccordionSection>
-
-          <AccordionSection
-            title="Sociais"
-            open={accordion.social}
-            onToggle={() => setAccordion((prev: AccordionState) => ({ ...prev, social: !prev.social }))}
-          >
-            <SkillCategoryInput skills={socialSkills} values={social} setValues={setSocial} teamColor={teamColor} />
-          </AccordionSection>
-
-          <AccordionSection
-            title="Utilidade"
-            open={accordion.utility}
-            onToggle={() => setAccordion((prev: AccordionState) => ({ ...prev, utility: !prev.utility }))}
-          >
-            <SkillCategoryInput skills={utilitySkills} values={utility} setValues={setUtility} teamColor={teamColor} />
-          </AccordionSection>
-
-          <AccordionSection
-            title="Complementares"
-            open={accordion.complementary}
-            onToggle={() => setAccordion((prev: AccordionState) => ({ ...prev, complementary: !prev.complementary }))}
-          >
-            <SkillCategoryInput
-              skills={complementarySkills}
-              values={complementary}
-              setValues={setComplementary}
-              teamColor={teamColor}
-            />
-          </AccordionSection>
-
-          <AccordionSection
-            title="Especialização"
-            open={accordion.specialization}
-            onToggle={() => setAccordion((prev: AccordionState) => ({ ...prev, specialization: !prev.specialization }))}
-          >
-            <div className="space-y-4">
-              {(Object.keys(specializationCategories) as SpecializationCategory[]).map((category) => (
-                <SpecializationCategoryInput
-                  key={category}
-                  category={category}
-                  specialization={specialization}
-                  setSpecialization={setSpecialization}
-                  newSpecializationInput={newSpecializationInputs[category]}
-                  setNewSpecializationInput={setNewSpecializationInputs}
-                  teamColor={teamColor}
-                  accordionState={accordion}
-                  setAccordionState={setAccordion}
-                  conductionBonuses={conductionBonuses}
-                  setConductionBonuses={setConductionBonuses}
-                  divineParent={divineParent}
-                />
+        {selectedDivineParentData?.effects.some((effect) => effect.requiresUserInput) && (
+          <div className="bg-blue-50 rounded-lg p-4 space-y-3">
+            <h4 className="font-semibold text-blue-800">Especializações do Pai/Mãe Divino(a)</h4>
+            {selectedDivineParentData.effects
+              .filter((effect) => effect.requiresUserInput)
+              .map((effect) => (
+                <div key={effect.skillName} className="space-y-2">
+                  <label className="block text-sm font-medium text-blue-700">
+                    {effect.skillName} (+{effect.value})
+                  </label>
+                  <input
+                    type="text"
+                    value={divineParentUserSpecializations[effect.skillName] || ""}
+                    onChange={(e) =>
+                      setDivineParentUserSpecializations((prev) => ({
+                        ...prev,
+                        [effect.skillName]: e.target.value,
+                      }))
+                    }
+                    placeholder={effect.userInputPlaceholder}
+                    className="w-full border border-blue-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  />
+                </div>
               ))}
+          </div>
+        )}
+
+        <div className="bg-gray-50 rounded-lg p-4">
+          <h4 className="font-semibold text-gray-800 mb-4">Atributos</h4>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <AttributeInput label="Força" value={force} setValue={setForce} teamColor={teamColor} required />
+            <AttributeInput
+              label="Determinação"
+              value={determination}
+              setValue={setDetermination}
+              teamColor={teamColor}
+              required
+            />
+            <AttributeInput label="Agilidade" value={agility} setValue={setAgility} teamColor={teamColor} required />
+            <AttributeInput label="Sabedoria" value={wisdom} setValue={setWisdom} teamColor={teamColor} required />
+            <AttributeInput
+              label="Percepção"
+              value={perception}
+              setValue={setPerception}
+              teamColor={teamColor}
+              required
+            />
+            <AttributeInput label="Destreza" value={dexterity} setValue={setDexterity} teamColor={teamColor} required />
+            <AttributeInput label="Vigor" value={vigor} setValue={setVigor} teamColor={teamColor} required />
+            <AttributeInput label="Carisma" value={charisma} setValue={setCharisma} teamColor={teamColor} required />
+          </div>
+        </div>
+
+        <AccordionSection
+          title="Poderes & Estilos"
+          open={accordion.powers}
+          onToggle={() => setAccordion((prev) => ({ ...prev, powers: !prev.powers }))}
+        >
+          <div className="space-y-6">
+            <div className="space-y-3">
+              <h5 className="text-md font-semibold text-gray-700">Poderes</h5>
+              <SkillCategoryInput skills={allPowers} values={powers} setValues={setPowers} teamColor={teamColor} />
             </div>
-          </AccordionSection>
-        </div>
-      </AccordionSection>
+            <div className="space-y-3">
+              <h5 className="text-md font-semibold text-gray-700">Estilos</h5>
+              <SkillCategoryInput skills={allStyles} values={styles} setValues={setStyles} teamColor={teamColor} />
+            </div>
+          </div>
+        </AccordionSection>
 
-      <AccordionSection
-        title="Vantagens"
-        open={accordion.advantages}
-        onToggle={() => setAccordion((prev: AccordionState) => ({ ...prev, advantages: !prev.advantages }))}
-      >
-        <div className="space-y-4">
-          <AccordionSection
-            title="Aptidões"
-            open={accordion.abilities}
-            onToggle={() => setAccordion((prev) => ({ ...prev, abilities: !prev.abilities }))}
-          >
-            <AdvantageDisadvantageSelector
-              label="Selecione as Aptidões"
-              items={abilities.map((a) => ({ name: a.name }))}
-              selectedItems={selectedAbilities}
-              setSelectedItems={setSelectedAbilities}
-              teamColor={teamColor}
-            />
-          </AccordionSection>
-          <AccordionSection
-            title="Peculiaridades"
-            open={accordion.peculiarities}
-            onToggle={() => setAccordion((prev: AccordionState) => ({ ...prev, peculiarities: !prev.peculiarities }))}
-          >
-            <AdvantageDisadvantageSelector
-              label="Selecione as Peculiaridades"
-              items={allPeculiarities}
-              selectedItems={selectedPeculiarities}
-              setSelectedItems={setSelectedPeculiarities}
-              teamColor={teamColor}
-            />
-          </AccordionSection>
-        </div>
-      </AccordionSection>
+        <AccordionSection
+          title="Perícias"
+          open={accordion.skills}
+          onToggle={() => setAccordion((prev) => ({ ...prev, skills: !prev.skills }))}
+        >
+          <div className="space-y-6">
+            <AccordionSection
+              title="Combate"
+              open={accordion.combat}
+              onToggle={() => setAccordion((prev) => ({ ...prev, combat: !prev.combat }))}
+            >
+              <SkillCategoryInput
+                skills={combatSkills}
+                values={combatSkillsState}
+                setValues={setCombatSkillsState}
+                teamColor={teamColor}
+              />
+            </AccordionSection>
 
-      <AccordionSection
-        title="Desvantagens"
-        open={accordion.disadvantages}
-        onToggle={() => setAccordion((prev: AccordionState) => ({ ...prev, disadvantages: !prev.disadvantages }))}
-      >
-        <div className="space-y-4">
-          <AccordionSection
-            title="Inaptidões"
-            open={accordion.disabilities}
-            onToggle={() => setAccordion((prev) => ({ ...prev, disabilities: !prev.disabilities }))}
-          >
-            <AdvantageDisadvantageSelector
-              label="Selecione as Inaptidões"
-              items={disabilities.map((a) => ({ name: a.name }))}
-              selectedItems={selectedDisabilities}
-              setSelectedItems={setSelectedDisabilities}
-              teamColor={teamColor}
-            />
-          </AccordionSection>
+            <AccordionSection
+              title="Sociais"
+              open={accordion.social}
+              onToggle={() => setAccordion((prev) => ({ ...prev, social: !prev.social }))}
+            >
+              <SkillCategoryInput
+                skills={socialSkills}
+                values={socialSkillsState}
+                setValues={setSocialSkillsState}
+                teamColor={teamColor}
+              />
+            </AccordionSection>
 
-          <AccordionSection
-            title="Trejeitos"
-            open={accordion.trejeitos}
-            onToggle={() => setAccordion((prev: AccordionState) => ({ ...prev, trejeitos: !prev.trejeitos }))}
-          >
-            <AdvantageDisadvantageSelector
-              label="Selecione os Trejeitos"
-              items={allTrejeitos}
-              selectedItems={selectedTrejeitos}
-              setSelectedItems={setSelectedTrejeitos}
-              teamColor={teamColor}
-            />
-          </AccordionSection>
-        </div>
-      </AccordionSection>
+            <AccordionSection
+              title="Utilidade"
+              open={accordion.utility}
+              onToggle={() => setAccordion((prev) => ({ ...prev, utility: !prev.utility }))}
+            >
+              <SkillCategoryInput
+                skills={utilitySkills}
+                values={utilitySkillsState}
+                setValues={setUtilitySkillsState}
+                teamColor={teamColor}
+              />
+            </AccordionSection>
+
+            <AccordionSection
+              title="Complementares"
+              open={accordion.complementary}
+              onToggle={() => setAccordion((prev) => ({ ...prev, complementary: !prev.complementary }))}
+            >
+              <SkillCategoryInput
+                skills={complementarySkills}
+                values={complementarySkillsState}
+                setValues={setComplementarySkillsState}
+                teamColor={teamColor}
+              />
+            </AccordionSection>
+
+            <AccordionSection
+              title="Especialização"
+              open={accordion.specialization}
+              onToggle={() => setAccordion((prev) => ({ ...prev, specialization: !prev.specialization }))}
+            >
+              <div className="space-y-4">
+                {(["languages", "arts", "knowledge", "driving", "crafts", "sports"] as SpecializationCategory[]).map(
+                  (category) => (
+                    <SpecializationCategoryInput
+                      key={category}
+                      category={category}
+                      specialization={specialization}
+                      setSpecialization={setSpecialization}
+                      newSpecializationInput={newSpecializationInput[category]}
+                      setNewSpecializationInput={setNewSpecializationInput}
+                      teamColor={teamColor}
+                      accordionState={accordion}
+                      setAccordionState={setAccordion}
+                      conductionBonuses={conductionBonuses}
+                      setConductionBonuses={setConductionBonuses}
+                      divineParent={divineParent}
+                    />
+                  ),
+                )}
+              </div>
+            </AccordionSection>
+          </div>
+        </AccordionSection>
+
+        <AccordionSection
+          title="Vantagens & Desvantagens"
+          open={accordion.advantages}
+          onToggle={() => setAccordion((prev) => ({ ...prev, advantages: !prev.advantages }))}
+        >
+          <div className="space-y-6">
+            <AccordionSection
+              title="Vantagens"
+              open={advantagesSubAccordion}
+              onToggle={() => setAdvantagesSubAccordion(!advantagesSubAccordion)}
+            >
+              <div className="space-y-6">
+                <AccordionSection
+                  title="Aptidões"
+                  open={accordion.abilities}
+                  onToggle={() => setAccordion((prev) => ({ ...prev, abilities: !prev.abilities }))}
+                >
+                  <AdvantageDisadvantageSelector
+                    label=""
+                    items={abilities}
+                    selectedItems={selectedAbilities}
+                    setSelectedItems={setSelectedAbilities}
+                    teamColor={teamColor}
+                  />
+                </AccordionSection>
+
+                <AccordionSection
+                  title="Peculiaridades"
+                  open={accordion.peculiarities}
+                  onToggle={() => setAccordion((prev) => ({ ...prev, peculiarities: !prev.peculiarities }))}
+                >
+                  <AdvantageDisadvantageSelector
+                    label=""
+                    items={allPeculiarities}
+                    selectedItems={selectedPeculiarities}
+                    setSelectedItems={setSelectedPeculiarities}
+                    teamColor={teamColor}
+                  />
+                </AccordionSection>
+
+                <AccordionSection
+                  title="Regalias"
+                  open={accordion.perks}
+                  onToggle={() => setAccordion((prev) => ({ ...prev, perks: !prev.perks }))}
+                >
+                  <AdvantageDisadvantageSelector
+                    label=""
+                    items={allPerks}
+                    selectedItems={selectedPerks}
+                    setSelectedItems={setSelectedPerks}
+                    teamColor={teamColor}
+                  />
+                </AccordionSection>
+              </div>
+            </AccordionSection>
+
+            <AccordionSection
+              title="Desvantagens"
+              open={disadvantagesSubAccordion}
+              onToggle={() => setDisadvantagesSubAccordion(!disadvantagesSubAccordion)}
+            >
+              <div className="space-y-6">
+                <AccordionSection
+                  title="Inaptidões"
+                  open={accordion.disabilities}
+                  onToggle={() => setAccordion((prev) => ({ ...prev, disabilities: !prev.disabilities }))}
+                >
+                  <AdvantageDisadvantageSelector
+                    label=""
+                    items={disabilities}
+                    selectedItems={selectedDisabilities}
+                    setSelectedItems={setSelectedDisabilities}
+                    teamColor={teamColor}
+                  />
+                </AccordionSection>
+
+                <AccordionSection
+                  title="Trejeitos"
+                  open={accordion.trejeitos}
+                  onToggle={() => setAccordion((prev) => ({ ...prev, trejeitos: !prev.trejeitos }))}
+                >
+                  <AdvantageDisadvantageSelector
+                    label=""
+                    items={allTrejeitos}
+                    selectedItems={selectedTrejeitos}
+                    setSelectedItems={setSelectedTrejeitos}
+                    teamColor={teamColor}
+                  />
+                </AccordionSection>
+
+                <AccordionSection
+                  title="Obstáculos"
+                  open={accordion.hindrances}
+                  onToggle={() => setAccordion((prev) => ({ ...prev, hindrances: !prev.hindrances }))}
+                >
+                  <AdvantageDisadvantageSelector
+                    label=""
+                    items={allHindrances}
+                    selectedItems={selectedHindrances}
+                    setSelectedItems={setSelectedHindrances}
+                    teamColor={teamColor}
+                  />
+                </AccordionSection>
+              </div>
+            </AccordionSection>
+          </div>
+        </AccordionSection>
+      </div>
     </AddMemberModalLayout>
   )
 }
+
+
+
+
+
 
 
 
