@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo } from "react"
 import { useNavigate } from "react-router-dom"
 import { FaTrash, FaEdit } from "react-icons/fa"
 import { FiChevronUp, FiChevronDown } from "react-icons/fi"
@@ -32,7 +32,6 @@ export default function BattleTable({ sheets, onDeleteMission, onEditMission }: 
   const navigate = useNavigate()
   const [sortColumn, setSortColumn] = useState<SortColumn>("name")
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc")
-  const [isSorting, setIsSorting] = useState(false)
 
   const sortedSheets = useMemo(() => {
     if (!sortColumn) return sheets
@@ -70,14 +69,6 @@ export default function BattleTable({ sheets, onDeleteMission, onEditMission }: 
     return sorted
   }, [sheets, sortColumn, sortDirection])
 
-  useEffect(() => {
-    setIsSorting(true)
-    const timer = setTimeout(() => {
-      setIsSorting(false)
-    }, 300)
-    return () => clearTimeout(timer)
-  }, [sortColumn, sortDirection, sheets])
-
   function handleSort(column: SortColumn) {
     if (sortColumn === column) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc")
@@ -103,7 +94,7 @@ export default function BattleTable({ sheets, onDeleteMission, onEditMission }: 
 
   return (
     <div className="overflow-x-auto rounded-xl shadow-lg border border-gray-200 bg-white">
-      <table className="min-w-full divide-y divide-gray-200">
+      <table className="min-w-full">
         <thead className="bg-gray-100 border-b-2 border-gray-200">
           <tr>
             {["name", "type", "createdAt", "location"].map((col) => {
@@ -136,7 +127,7 @@ export default function BattleTable({ sheets, onDeleteMission, onEditMission }: 
             <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider" colSpan={2} />
           </tr>
         </thead>
-        <tbody className={`divide-y divide-gray-100 ${isSorting ? "animate-flash-sort" : ""}`}>
+        <tbody>
           {sheets.length === 0 ? (
             <tr>
               <td colSpan={6} className="px-6 py-5 text-center text-gray-500 italic">
@@ -145,7 +136,10 @@ export default function BattleTable({ sheets, onDeleteMission, onEditMission }: 
             </tr>
           ) : (
             sortedSheets.map((sheet) => (
-              <tr key={sheet.id} className="hover:bg-gray-100 transition-colors duration-150">
+              <tr
+                key={sheet.id}
+                className="hover:bg-gray-100 transition-colors duration-150"
+              >
                 <td
                   onClick={() => navigate(`/missao/${sheet.id}`)}
                   className="px-6 py-5 font-medium text-gray-800 truncate cursor-pointer"

@@ -1,5 +1,3 @@
-"use client"
-
 import type React from "react"
 import { AccordionSection } from "./AccordionSection"
 import { type SpecializationCategory, specializationCategories, type AccordionState } from "./../../constants/rpg.data"

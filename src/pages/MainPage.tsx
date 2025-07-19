@@ -1,5 +1,5 @@
 import type React from "react"
-
+import { FaPlus } from "react-icons/fa"
 import { useState } from "react"
 import BattleTable from "../components/BattleTable"
 import { CreateMissionModal } from "../components/CreateMissionModal"
@@ -90,8 +90,9 @@ export default function MainPage({ sheets, setSheets }: Props) {
 
       <button
         onClick={openCreateMissionModal}
-        className="bg-blue-600 text-white px-4 py-2 rounded cursor-pointer hover:bg-blue-700 transition mb-6 max-w-max"
+        className="bg-blue-600 text-white px-4 py-2 rounded cursor-pointer hover:bg-blue-700 transition mb-6 max-w-max flex items-center gap-2"
       >
+        <FaPlus />
         Nova Missão
       </button>
 
