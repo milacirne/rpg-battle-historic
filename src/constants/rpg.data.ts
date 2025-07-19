@@ -1053,6 +1053,40 @@ export function calculateFinalSkills(
   }
 }
 
+export type InitiativeResult = {
+  memberId: string
+  name: string
+  teamName: string
+  baseInitiative: number
+  diceRoll: number
+  totalInitiative: number
+}
+
+export type Round = {
+  id: string
+  name: string // e.g., "Rodada 1"
+  initiativeOrder: InitiativeResult[]
+  createdAt: string // Timestamp for sorting
+}
+
+export type BattleSheet = {
+  // Exported BattleSheet
+  id: string
+  name: string
+  type: RPType
+  location: string
+  createdAt: string
+  team1Name?: string
+  team2Name?: string
+  team1Members?: Member[]
+  team2Members?: Member[]
+  rounds?: Round[]
+}
+
+type RPType = "Oficial" | "Semi-Oficial" | "Livre"
+
+
+
 
 
 

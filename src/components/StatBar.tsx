@@ -17,9 +17,9 @@ export default function StatBar({
   const percentage = Math.min(((max - used) / max) * 100, 100)
 
   const gradientClasses = {
-    yellow: "bg-gradient-to-r from-yellow-500 via-yellow-600 to-yellow-700 shadow-yellow-400/50",
-    green: "bg-gradient-to-r from-green-400 via-green-500 to-green-600 shadow-green-400/50",
-    blue: "bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 shadow-blue-400/50",
+    yellow: "bg-gradient-to-r from-yellow-200 via-yellow-300 to-yellow-700 shadow-yellow-400/50",
+    green: "bg-gradient-to-r from-green-200 via-green-300 to-green-400 shadow-green-400/50",
+    blue: "bg-gradient-to-r from-blue-200 via-blue-300 to-blue-400 shadow-blue-400/50",
   }
 
   const barHeight = small ? "h-3" : "h-5"

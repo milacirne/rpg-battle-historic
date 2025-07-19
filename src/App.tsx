@@ -4,9 +4,12 @@ import { Routes, Route } from "react-router-dom"
 
 import MainPage from "./pages/MainPage"
 import MissionPage from "./pages/MissionPage"
-import RoundPage from "./pages/RoundPage"
+import AddRoundPage from "./pages/AddRoundPage"
+import ViewRoundsPage from "./pages/ViewRoundsPage"
 
-type RPType = 'Oficial' | 'Semi-Oficial' | 'Livre'
+import type { Member, Round } from "./constants/rpg.data"
+
+type RPType = "Oficial" | "Semi-Oficial" | "Livre"
 
 type BattleSheet = {
   id: string
@@ -14,6 +17,11 @@ type BattleSheet = {
   type: RPType
   location: string
   createdAt: string
+  team1Name?: string
+  team2Name?: string
+  team1Members?: Member[]
+  team2Members?: Member[]
+  rounds?: Round[]
 }
 
 export default function App() {
@@ -24,6 +32,7 @@ export default function App() {
       type: "Oficial",
       location: "Monte Olimpo",
       createdAt: "2025-07-01T14:00:00Z",
+      rounds: [],
     },
     {
       id: uuidv4(),
@@ -31,6 +40,7 @@ export default function App() {
       type: "Semi-Oficial",
       location: "Subsolo de Nova York",
       createdAt: "2025-06-25T10:30:00Z",
+      rounds: [],
     },
     {
       id: uuidv4(),
@@ -38,30 +48,28 @@ export default function App() {
       type: "Livre",
       location: "Pântano de Everglades",
       createdAt: "2025-06-20T16:45:00Z",
+      rounds: [],
     },
   ])
 
   return (
     <Routes>
+      <Route path="/" element={<MainPage sheets={sheets} setSheets={setSheets} />} />
+      <Route path="/missao/:id" element={<MissionPage sheets={sheets} setSheets={setSheets} />} />
       <Route
-        path="/"
-        element={
-          <MainPage sheets={sheets} setSheets={setSheets} />
-        }
+        path="/missao/:id/adicionar-rodada"
+        element={<AddRoundPage sheets={sheets} setSheets={setSheets} />}
       />
       <Route
-        path="/missao/:id"
-        element={
-          <MissionPage sheets={sheets} />
-        }
-      />
-      <Route 
-        path="/missao/:id/rodada" 
-        element={<RoundPage sheets={sheets} />} 
+        path="/missao/:id/rodadas"
+        element={<ViewRoundsPage sheets={sheets} setSheets={setSheets} />}
       />
     </Routes>
   )
 }
+
+
+
 
 
 

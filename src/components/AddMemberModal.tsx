@@ -193,6 +193,7 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+
     if (!name.trim()) {
       alert("Preencha o nome do personagem.")
       return
@@ -274,6 +275,7 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
 
     if (type === "semideus") memberToSave.divineParent = divineParent.trim()
     onAddMember(memberToSave)
+    onClose()
   }
 
   return (
@@ -363,26 +365,44 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
       <div className="bg-gray-50 rounded-xl p-4">
         <h4 className="text-lg font-semibold text-gray-800 mb-4">Atributos</h4>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-          <AttributeInput label="Força" value={force} setValue={setForce} teamColor={teamColor} required />
+          <AttributeInput label="Força" value={force} setValue={setForce} teamColor={teamColor} required={true} />
           <AttributeInput
             label="Determinação"
             value={determination}
             setValue={setDetermination}
             teamColor={teamColor}
-            required
+            required={true}
           />
-          <AttributeInput label="Agilidade" value={agility} setValue={setAgility} teamColor={teamColor} required />
-          <AttributeInput label="Sabedoria" value={wisdom} setValue={setWisdom} teamColor={teamColor} required />
+          <AttributeInput
+            label="Agilidade"
+            value={agility}
+            setValue={setAgility}
+            teamColor={teamColor}
+            required={true}
+          />
+          <AttributeInput label="Sabedoria" value={wisdom} setValue={setWisdom} teamColor={teamColor} required={true} />
           <AttributeInput
             label="Percepção"
             value={perception}
             setValue={setPerception}
             teamColor={teamColor}
-            required
+            required={true}
           />
-          <AttributeInput label="Destreza" value={dexterity} setValue={setDexterity} teamColor={teamColor} required />
-          <AttributeInput label="Vigor" value={vigor} setValue={setVigor} teamColor={teamColor} required />
-          <AttributeInput label="Carisma" value={charisma} setValue={setCharisma} teamColor={teamColor} required />
+          <AttributeInput
+            label="Destreza"
+            value={dexterity}
+            setValue={setDexterity}
+            teamColor={teamColor}
+            required={true}
+          />
+          <AttributeInput label="Vigor" value={vigor} setValue={setVigor} teamColor={teamColor} required={true} />
+          <AttributeInput
+            label="Carisma"
+            value={charisma}
+            setValue={setCharisma}
+            teamColor={teamColor}
+            required={true}
+          />
         </div>
       </div>
 
@@ -545,6 +565,9 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
     </AddMemberModalLayout>
   )
 }
+
+
+
 
 
 

@@ -1,9 +1,11 @@
+import type React from "react"
+
 import { useState } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 
 import CreateTeamsModal from "../components/CreateTeamsModal"
 import AddMemberModal from "../components/AddMemberModal"
-import type { Member } from "../constants/rpg.data"
+import type { Member, Round } from "../constants/rpg.data"
 import MemberCard from "../components/MemberCard"
 import { FaChevronRight, FaPlus } from "react-icons/fa"
 import MissionHeader from "../components/MissionHeader"
@@ -16,30 +18,35 @@ type BattleSheet = {
   type: RPType
   location: string
   createdAt: string
+  team1Name?: string
+  team2Name?: string
+  team1Members?: Member[]
+  team2Members?: Member[]
+  rounds?: Round[]
 }
 
 type Props = {
   sheets: BattleSheet[]
+  setSheets: React.Dispatch<React.SetStateAction<BattleSheet[]>>
 }
 
-export default function MissionPage({ sheets }: Props) {
+export default function MissionPage({ sheets, setSheets }: Props) {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
 
   const mission = sheets.find((sheet) => sheet.id === id)
 
-  const [teamsCreated, setTeamsCreated] = useState(false)
-  const [team1Name, setTeam1Name] = useState("")
-  const [team2Name, setTeam2Name] = useState("")
+  const [teamsCreated, setTeamsCreated] = useState(!!mission?.team1Name && !!mission?.team2Name)
+  const [team1Name, setTeam1Name] = useState(mission?.team1Name || "")
+  const [team2Name, setTeam2Name] = useState(mission?.team2Name || "")
 
-  const [team1Members, setTeam1Members] = useState<Member[]>([])
-  const [team2Members, setTeam2Members] = useState<Member[]>([])
+  const [team1Members, setTeam1Members] = useState<Member[]>(mission?.team1Members || [])
+  const [team2Members, setTeam2Members] = useState<Member[]>(mission?.team2Members || [])
 
   const [createTeamsModalOpen, setCreateTeamsModalOpen] = useState(false)
   const [addMemberModalOpen, setAddMemberModalOpen] = useState(false)
   const [modalTeam, setModalTeam] = useState<"team1" | "team2" | null>(null)
 
-  // Novo estado para edição (null = modo adicionar)
   const [editingMember, setEditingMember] = useState<Member | null>(null)
 
   if (!mission) {
@@ -51,6 +58,10 @@ export default function MissionPage({ sheets }: Props) {
         </button>
       </div>
     )
+  }
+
+  const updateMissionData = (updatedData: Partial<BattleSheet>) => {
+    setSheets((prevSheets) => prevSheets.map((sheet) => (sheet.id === id ? { ...sheet, ...updatedData } : sheet)))
   }
 
   function openAddMemberModal(team: "team1" | "team2", memberToEdit?: Member) {
@@ -72,48 +83,64 @@ export default function MissionPage({ sheets }: Props) {
     }
     setTeamsCreated(true)
     setCreateTeamsModalOpen(false)
+    updateMissionData({ team1Name, team2Name })
   }
 
-  // Função para adicionar ou editar membro
   function handleAddOrEditMember(member: Member) {
     if (!modalTeam) return
 
+    let updatedTeam1Members = [...team1Members]
+    let updatedTeam2Members = [...team2Members]
+
     if (editingMember) {
-      // Editando membro
       if (modalTeam === "team1") {
-        setTeam1Members((prev) => prev.map((m) => (m.id === member.id ? member : m)))
+        updatedTeam1Members = updatedTeam1Members.map((m) => (m.id === member.id ? member : m))
+        setTeam1Members(updatedTeam1Members)
       } else {
-        setTeam2Members((prev) => prev.map((m) => (m.id === member.id ? member : m)))
+        updatedTeam2Members = updatedTeam2Members.map((m) => (m.id === member.id ? member : m))
+        setTeam2Members(updatedTeam2Members)
       }
     } else {
-      // Adicionando membro novo
       if (modalTeam === "team1") {
-        setTeam1Members((prev) => [...prev, member])
+        updatedTeam1Members = [...updatedTeam1Members, member]
+        setTeam1Members(updatedTeam1Members)
       } else {
-        setTeam2Members((prev) => [...prev, member])
+        updatedTeam2Members = [...updatedTeam2Members, member]
+        setTeam2Members(updatedTeam2Members)
       }
     }
+    updateMissionData({ team1Members: updatedTeam1Members, team2Members: updatedTeam2Members })
     closeAddMemberModal()
   }
 
   function handleDeleteMember(team: "team1" | "team2", memberId: string) {
     if (!confirm("Tem certeza que quer apagar esse membro?")) return
 
+    let updatedTeam1Members = [...team1Members]
+    let updatedTeam2Members = [...team2Members]
+
     if (team === "team1") {
-      setTeam1Members((prev) => prev.filter((m) => m.id !== memberId))
+      updatedTeam1Members = updatedTeam1Members.filter((m) => m.id !== memberId)
+      setTeam1Members(updatedTeam1Members)
     } else {
-      setTeam2Members((prev) => prev.filter((m) => m.id !== memberId))
+      updatedTeam2Members = updatedTeam2Members.filter((m) => m.id !== memberId)
+      setTeam2Members(updatedTeam2Members)
     }
+    updateMissionData({ team1Members: updatedTeam1Members, team2Members: updatedTeam2Members })
   }
 
-  function handleNewRound() {
-    navigate(`/missao/${id}/rodada`)
+  function handleAddRoundPage() {
+    navigate(`/missao/${id}/adicionar-rodada`, {
+      state: { team1Members, team2Members, team1Name, team2Name },
+    })
+  }
+
+  function handleViewRoundsPage() {
+    navigate(`/missao/${id}/rodadas`)
   }
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
-      {/* Header */}
-      {/* As props name, location, createdAt, type são passadas diretamente do objeto mission */}
       <MissionHeader
         name={mission.name}
         location={mission.location}
@@ -132,10 +159,9 @@ export default function MissionPage({ sheets }: Props) {
         </div>
       ) : (
         <>
-          {/* Linha com botão de rodada + chevron */}
           <div className="relative mt-8 mb-6 flex flex-col items-center">
             <button
-              onClick={handleNewRound}
+              onClick={handleAddRoundPage}
               disabled={team1Members.length === 0 || team2Members.length === 0}
               className={`px-4 sm:px-6 py-2 sm:py-3 rounded-full text-sm sm:text-base transition flex items-center gap-2 shadow
                 ${
@@ -150,8 +176,8 @@ export default function MissionPage({ sheets }: Props) {
             </button>
 
             <button
-              onClick={() => navigate(`/missao/${id}/rodada`)}
-              className="absolute right-4 top-1 sm:top-0 text-red-500 hover:text-red-700 transition"
+              onClick={handleViewRoundsPage}
+              className="absolute right-4 top-1 sm:top-0 text-purple-500 hover:text-purple-700 transition cursor-pointer"
               title="Ver rodadas"
             >
               <FaChevronRight size={28} />
@@ -159,7 +185,6 @@ export default function MissionPage({ sheets }: Props) {
           </div>
 
           <main className="w-full flex flex-col sm:flex-row gap-4">
-            {/* Equipe 1 */}
             <section className="flex-1 bg-white rounded-lg p-6 shadow">
               <h2 className="text-xl font-bold mb-4 text-blue-700">{team1Name}</h2>
               <button
@@ -185,7 +210,6 @@ export default function MissionPage({ sheets }: Props) {
               )}
             </section>
 
-            {/* Equipe 2 */}
             <section className="flex-1 bg-white rounded-lg p-6 shadow">
               <h2 className="text-xl font-bold mb-4 text-red-700">{team2Name}</h2>
               <button
@@ -214,7 +238,6 @@ export default function MissionPage({ sheets }: Props) {
         </>
       )}
 
-      {/* Modal para criar equipes */}
       {createTeamsModalOpen && (
         <CreateTeamsModal
           team1Name={team1Name}
@@ -226,7 +249,6 @@ export default function MissionPage({ sheets }: Props) {
         />
       )}
 
-      {/* Modal para adicionar/editar membros */}
       {addMemberModalOpen && modalTeam && (
         <AddMemberModal
           teamName={modalTeam === "team1" ? team1Name : team2Name}
@@ -239,6 +261,7 @@ export default function MissionPage({ sheets }: Props) {
     </div>
   )
 }
+
 
 
 
