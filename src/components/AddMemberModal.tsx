@@ -134,23 +134,31 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
     hindrances: false,
   })
 
-  // Estados separados para sub-accordions de vantagens e desvantagens
-  const [advantagesSubAccordion, setAdvantagesSubAccordion] = useState(false)
-  const [disadvantagesSubAccordion, setDisadvantagesSubAccordion] = useState(false)
-
   const selectedDivineParentData = allDivineParents.find((dp) => dp.name === divineParent)
 
+  // Corrigido: useEffect que só roda quando o divineParent muda
   useEffect(() => {
     if (selectedDivineParentData) {
       const newUserSpecializations: Record<string, string> = {}
+      let hasNewFields = false
+
       selectedDivineParentData.effects.forEach((effect) => {
-        if (effect.requiresUserInput && !divineParentUserSpecializations[effect.skillName]) {
+        if (effect.requiresUserInput) {
           newUserSpecializations[effect.skillName] = ""
+          hasNewFields = true
         }
       })
-      setDivineParentUserSpecializations((prev) => ({ ...prev, ...newUserSpecializations }))
+
+      // Só atualiza se há novos campos e eles não existem ainda
+      if (hasNewFields) {
+        setDivineParentUserSpecializations(newUserSpecializations)
+      }
+    } else {
+      // Limpa as especializações quando não há pai divino selecionado
+      setDivineParentUserSpecializations({})
     }
-  }, [divineParent, selectedDivineParentData, divineParentUserSpecializations])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [divineParent]) // Só observa mudanças no divineParent
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -289,6 +297,7 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
                     }
                     placeholder={effect.userInputPlaceholder}
                     className="w-full border border-blue-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    autoComplete="off"
                   />
                 </div>
               ))}
@@ -433,8 +442,8 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
           <div className="space-y-6">
             <AccordionSection
               title="Vantagens"
-              open={advantagesSubAccordion}
-              onToggle={() => setAdvantagesSubAccordion(!advantagesSubAccordion)}
+              open={accordion.advantages}
+              onToggle={() => setAccordion((prev) => ({ ...prev, advantages: !prev.advantages }))}
             >
               <div className="space-y-6">
                 <AccordionSection
@@ -483,8 +492,8 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
 
             <AccordionSection
               title="Desvantagens"
-              open={disadvantagesSubAccordion}
-              onToggle={() => setDisadvantagesSubAccordion(!disadvantagesSubAccordion)}
+              open={accordion.disadvantages}
+              onToggle={() => setAccordion((prev) => ({ ...prev, disadvantages: !prev.disadvantages }))}
             >
               <div className="space-y-6">
                 <AccordionSection
@@ -536,6 +545,7 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
     </AddMemberModalLayout>
   )
 }
+
 
 
 
