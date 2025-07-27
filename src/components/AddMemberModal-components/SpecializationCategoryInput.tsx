@@ -121,7 +121,7 @@ export function SpecializationCategoryInput({
       onToggle={() => setAccordionState((prev) => ({ ...prev, [category]: !prev[category] }))}
     >
       <div className="space-y-4">
-        <div className="flex gap-3 p-3 bg-gray-50 rounded-lg">
+        <div className="flex flex-col sm:flex-row gap-3 p-3 bg-gray-50 rounded-lg">
           <input
             type="text"
             value={newSpecializationInput}

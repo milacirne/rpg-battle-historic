@@ -218,7 +218,7 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
 
   return (
     <AddMemberModalLayout
-      title={isEditing ? "Editar membro" : "Adicionar membro"}
+      title={isEditing ? "Editar personagem" : "Adicionar personagem"}
       teamName={teamName}
       teamColor={teamColor}
       onClose={onClose}
