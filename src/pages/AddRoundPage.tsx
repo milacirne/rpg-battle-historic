@@ -1,11 +1,14 @@
+"use client"
+
 import type React from "react"
 
 import { useNavigate, useParams, useLocation } from "react-router-dom"
-import { FaChevronLeft, FaDiceD20, FaHome, FaPlus } from "react-icons/fa"
+import { FaChevronLeft, FaDiceD20, FaHome, FaPlus, FaFlask, FaDice } from "react-icons/fa"
 import { useState } from "react"
 import { CalculateInitiativesModal } from "../components/Rounds-components/CalculateInitiativesModal"
 import type { Member, Round, InitiativeResult } from "../constants/rpg.data"
 import { v4 as uuidv4 } from "uuid"
+import { SkillTestModal } from "../components/Rounds-components/SkillTestModal"
 
 type RPType = "Oficial" | "Semi-Oficial" | "Livre"
 
@@ -21,6 +24,29 @@ type BattleSheet = {
 type Props = {
   sheets: BattleSheet[]
   setSheets: React.Dispatch<React.SetStateAction<BattleSheet[]>>
+}
+
+type SkillTestResult = {
+  id: string
+  testName?: string
+  characterName: string
+  teamName: string
+  skillType: string
+  skillName: string
+  attributeName: string
+  skillValue: number
+  attributeValue: number
+  diceRoll: number
+  totalResult: number
+  timestamp: string
+  isCombat: boolean
+  difficultyLevel?: number
+  isSuccess?: boolean
+  globalDifficultyLevel?: number
+  isGlobalSum?: boolean
+  individualDifficultyLevel?: number
+  customPhrase?: string
+  customPhraseStatus?: "success" | "failure" | "neutral"
 }
 
 export default function AddRoundPage({ sheets, setSheets }: Props) {
@@ -44,6 +70,9 @@ export default function AddRoundPage({ sheets, setSheets }: Props) {
 
   const [isInitiativeModalOpen, setIsInitiativeModalOpen] = useState(false)
   const [initiativeOrder, setInitiativeOrder] = useState<InitiativeResult[]>([])
+  const [isSkillTestModalOpen, setIsSkillTestModalOpen] = useState(false)
+  const [skillTestGroups, setSkillTestGroups] = useState<{ [key: string]: SkillTestResult[] }>({})
+  const [editingTestId, setEditingTestId] = useState<string | null>(null)
 
   if (!mission) {
     return (
@@ -58,6 +87,89 @@ export default function AddRoundPage({ sheets, setSheets }: Props) {
 
   function handleInitiativeCalculated(results: InitiativeResult[]) {
     setInitiativeOrder(results)
+  }
+
+  function handleSkillTestResult(results: SkillTestResult[]) {
+    if (results.length === 0) return
+
+    if (editingTestId) {
+      setSkillTestGroups((prev) => ({
+        ...prev,
+        [editingTestId]: results,
+      }))
+      setEditingTestId(null)
+    } else {
+      const groupId = `test-${Date.now()}-${Math.random()}`
+      setSkillTestGroups((prev) => ({
+        ...prev,
+        [groupId]: results,
+      }))
+    }
+  }
+
+  function handleRemoveTestGroup(groupId: string) {
+    setSkillTestGroups((prev) => {
+      const newGroups = { ...prev }
+      delete newGroups[groupId]
+      return newGroups
+    })
+  }
+
+  function handleEditTestGroup(groupId: string) {
+    setEditingTestId(groupId)
+    setIsSkillTestModalOpen(true)
+  }
+
+  function getCorrectSpecializationName(member: Member, displayName: string): string {
+    if (!displayName.includes("(") || !displayName.includes(")")) return displayName
+
+    const baseSkill = displayName.split("(")[0].trim()
+    const inputSpec = displayName.split("(")[1].replace(")", "").trim()
+
+    // Normalizar input para busca
+    const normalizedInput = inputSpec
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim()
+
+    const specializations = member.baseSkills?.specialization || {}
+    const categoryKey = Object.keys({
+      languages: "Idiomas",
+      arts: "Artes",
+      knowledge: "Conhecimento",
+      driving: "Condução",
+      crafts: "Ofícios",
+      sports: "Esportes",
+    }).find((key) => {
+      const categories = {
+        languages: "Idiomas",
+        arts: "Artes",
+        knowledge: "Conhecimento",
+        driving: "Condução",
+        crafts: "Ofícios",
+        sports: "Esportes",
+      }
+      return categories[key as keyof typeof categories] === baseSkill
+    })
+
+    if (categoryKey && specializations[categoryKey as keyof typeof specializations]) {
+      const categorySpecs = specializations[categoryKey as keyof typeof specializations] || {}
+      const correctName = Object.keys(categorySpecs).find(
+        (spec) =>
+          spec
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .trim() === normalizedInput,
+      )
+
+      if (correctName) {
+        return `${baseSkill} (${correctName})`
+      }
+    }
+
+    return displayName
   }
 
   function handleAddRound() {
@@ -104,12 +216,13 @@ export default function AddRoundPage({ sheets, setSheets }: Props) {
             <FaChevronLeft size={18} />
           </button>
         </div>
-        <h2 className="text-lg sm:text-xl font-bold text-gray-800 text-center flex-1 mx-2">Adicionar Rodada</h2>
+        <div className="flex justify-center flex-1 mx-2">
+          <h2 className="text-lg sm:text-xl font-bold text-gray-800">Adicionar Rodada</h2>
+        </div>
         <div className="w-10" />
       </div>
 
-      {/* Botão Calcular Iniciativas alinhado à direita */}
-      <div className="flex justify-end mb-6">
+      <div className="flex justify-end gap-3 mb-6">
         <button
           onClick={() => setIsInitiativeModalOpen(true)}
           className="bg-purple-600 text-white px-5 py-2 sm:px-6 sm:py-3 rounded-lg text-base sm:text-lg font-semibold hover:bg-purple-700 transition-all duration-300 flex items-center gap-2 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 cursor-pointer"
@@ -123,12 +236,32 @@ export default function AddRoundPage({ sheets, setSheets }: Props) {
           <FaDiceD20 className="text-lg sm:text-xl" />
           Calcular Iniciativas
         </button>
+
+        <button
+          onClick={() => setIsSkillTestModalOpen(true)}
+          className={`px-5 py-2 sm:px-6 sm:py-3 rounded-lg text-base sm:text-lg font-semibold transition-all duration-300 flex items-center gap-2 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 cursor-pointer ${
+            initiativeOrder.length === 0
+              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+              : "bg-green-600 text-white hover:bg-green-700"
+          }`}
+          disabled={initiativeOrder.length === 0}
+          title={
+            initiativeOrder.length === 0
+              ? "Calcule as iniciativas primeiro para fazer testes de perícia"
+              : "Fazer Teste de Perícia"
+          }
+        >
+          <FaFlask className="text-lg sm:text-xl" />
+          Teste de Perícia
+        </button>
       </div>
 
       {initiativeOrder.length > 0 && (
         <>
           <div className="bg-white p-3 sm:p-4 rounded-xl shadow-lg mt-6 border border-gray-200">
-            <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-gray-800 text-center">Ordem de Iniciativa</h3>
+            <div className="mb-3 sm:mb-4">
+              <h3 className="text-lg sm:text-xl font-bold text-gray-800">Ordem de Iniciativa</h3>
+            </div>
             <ol className="space-y-2 sm:space-y-3">
               {initiativeOrder.map((result, index) => (
                 <li
@@ -160,7 +293,13 @@ export default function AddRoundPage({ sheets, setSheets }: Props) {
                     Iniciativa:{" "}
                     <span className="font-medium text-gray-800">
                       {result.baseInitiative} <span className="text-gray-500">(base)</span>{" "}
-                      <span className="text-gray-500">+</span> {result.diceRoll}{" "}
+                      <span className="text-gray-500">+</span>
+                      <span className="inline-flex items-center gap-1 mx-1">
+                        <FaDice className="text-purple-600" size={12} />
+                        <span className="bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded font-bold text-xs">
+                          {result.diceRoll}
+                        </span>
+                      </span>
                       <span className="text-gray-500">(dado)</span>
                       {result.perkModifierApplied !== 0 && (
                         <span className={`ml-1 ${result.perkModifierApplied > 0 ? "text-green-600" : "text-red-600"}`}>
@@ -182,7 +321,156 @@ export default function AddRoundPage({ sheets, setSheets }: Props) {
             </ol>
           </div>
 
-          {/* Botão Adicionar Rodada aparece apenas se initiatives forem calculadas */}
+          {Object.keys(skillTestGroups).length > 0 && (
+            <div className="space-y-4 mt-6">
+              {Object.entries(skillTestGroups).map(([groupId, results]) => {
+                const firstResult = results[0]
+                const testName = firstResult?.testName
+
+                return (
+                  <div key={groupId} className="bg-white p-3 sm:p-4 rounded-xl shadow-lg border border-gray-200">
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <h3 className="text-lg sm:text-xl font-bold text-gray-800">{testName || "Teste de Perícia"}</h3>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleEditTestGroup(groupId)}
+                          className="text-blue-600 hover:text-blue-800 p-1 rounded transition-colors cursor-pointer"
+                          title="Editar teste"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                            />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => handleRemoveTestGroup(groupId)}
+                          className="text-red-600 hover:text-red-800 p-1 rounded transition-colors cursor-pointer"
+                          title="Remover teste"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+
+                    {(firstResult?.globalDifficultyLevel || firstResult?.individualDifficultyLevel) && (
+                      <div className="mb-3 text-sm text-gray-600">
+                        {firstResult.globalDifficultyLevel && (
+                          <span className="font-medium">
+                            Nível de Dificuldade Global: {firstResult.globalDifficultyLevel}
+                            {firstResult.isGlobalSum && " (Somatório)"}
+                          </span>
+                        )}
+                        {!firstResult.globalDifficultyLevel && firstResult.individualDifficultyLevel && (
+                          <span className="font-medium">Dificuldades Individuais</span>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="space-y-2 sm:space-y-3">
+                      {results.map((result) => {
+                        const member = [...team1Members, ...team2Members].find((m) => m.name === result.characterName)
+                        const correctedSkillName = member
+                          ? getCorrectSpecializationName(member, result.skillName)
+                          : result.skillName
+
+                        return (
+                          <div
+                            key={result.id}
+                            className={`flex flex-col sm:flex-row items-center justify-between p-2 sm:p-3 rounded-lg shadow-sm transition-all duration-200 ${
+                              result.teamName === team1Name
+                                ? "bg-blue-50 border-l-4 border-blue-500"
+                                : "bg-red-50 border-l-4 border-red-500"
+                            }`}
+                          >
+                            <div className="flex items-center gap-1 sm:gap-2 mb-1 sm:mb-0">
+                              <span className="font-semibold text-gray-900 text-sm sm:text-base">
+                                {result.characterName} (
+                                <span
+                                  className="font-bold"
+                                  style={{ color: result.teamName === team1Name ? "#2563EB" : "#DC2626" }}
+                                >
+                                  {result.teamName}
+                                </span>
+                                )
+                                {result.customPhrase && (
+                                  <span
+                                    className={`font-normal ml-1 italic ${
+                                      result.customPhraseStatus === "success"
+                                        ? "font-bold text-green-700"
+                                        : result.customPhraseStatus === "failure"
+                                          ? "font-bold text-red-700"
+                                          : "text-gray-600"
+                                    }`}
+                                  >
+                                    {result.customPhrase}
+                                  </span>
+                                )}
+                              </span>
+                            </div>
+                            <div className="text-gray-700 text-xs sm:text-sm flex items-center gap-1">
+                              <span className="font-medium text-gray-800">
+                                {correctedSkillName} + {result.attributeName}
+                              </span>
+                              <span className="text-gray-500">=</span>
+                              <span className="font-medium text-gray-800">
+                                {result.skillValue} + {result.attributeValue} +
+                                <span className="inline-flex items-center gap-1 mx-1">
+                                  <FaDice className="text-purple-600" size={12} />
+                                  <span className="bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded font-bold text-xs">
+                                    {result.diceRoll}
+                                  </span>
+                                </span>
+                              </span>
+                              <span className="text-gray-500">=</span>
+                              <span
+                                className={`font-extrabold text-base sm:text-lg ${
+                                  result.isSuccess === true
+                                    ? "text-green-700"
+                                    : result.isSuccess === false
+                                      ? "text-red-700"
+                                      : "text-green-700"
+                                }`}
+                              >
+                                {result.totalResult}
+                                {result.isSuccess !== undefined && (
+                                  <span
+                                    className={`ml-1 text-xs font-medium ${
+                                      result.isSuccess ? "text-green-600" : "text-red-600"
+                                    }`}
+                                  >
+                                    ({result.isSuccess ? "Sucesso" : "Falha"})
+                                  </span>
+                                )}
+                                {result.individualDifficultyLevel && (
+                                  <span className="ml-1 text-xs text-gray-500">
+                                    (Dif: {result.individualDifficultyLevel})
+                                  </span>
+                                )}
+                              </span>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
           <div className="flex justify-center mt-6">
             <button
               onClick={handleAddRound}
@@ -204,9 +492,35 @@ export default function AddRoundPage({ sheets, setSheets }: Props) {
         team2Name={team2Name}
         team2Members={team2Members}
       />
+
+      <SkillTestModal
+        isOpen={isSkillTestModalOpen}
+        onClose={() => {
+          setIsSkillTestModalOpen(false)
+          setEditingTestId(null)
+        }}
+        onAddResult={handleSkillTestResult}
+        initiativeOrder={initiativeOrder}
+        team1Members={team1Members}
+        team2Members={team2Members}
+        team1Name={team1Name}
+        team2Name={team2Name}
+        editingTestId={editingTestId}
+        existingTests={editingTestId ? skillTestGroups[editingTestId] : undefined}
+      />
     </div>
   )
 }
+
+
+
+
+
+
+
+
+
+
 
 
 
