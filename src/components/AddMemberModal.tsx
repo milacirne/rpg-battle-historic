@@ -136,7 +136,6 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
 
   const selectedDivineParentData = allDivineParents.find((dp) => dp.name === divineParent)
 
-  // Corrigido: useEffect que só roda quando o divineParent muda
   useEffect(() => {
     if (selectedDivineParentData) {
       const newUserSpecializations: Record<string, string> = {}
@@ -144,21 +143,20 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
 
       selectedDivineParentData.effects.forEach((effect) => {
         if (effect.requiresUserInput) {
-          newUserSpecializations[effect.skillName] = ""
+          newUserSpecializations[effect.skillName] =
+            editingMember?.divineParentUserSpecializations?.[effect.skillName] || ""
           hasNewFields = true
         }
       })
 
-      // Só atualiza se há novos campos e eles não existem ainda
       if (hasNewFields) {
         setDivineParentUserSpecializations(newUserSpecializations)
       }
     } else {
-      // Limpa as especializações quando não há pai divino selecionado
       setDivineParentUserSpecializations({})
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [divineParent]) // Só observa mudanças no divineParent
+  }, [divineParent])
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -171,6 +169,17 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
     if (type === "semideus" && !divineParent) {
       alert("Selecione um pai/mãe divino(a)")
       return
+    }
+
+    if (type === "semideus" && selectedDivineParentData) {
+      const requiredSpecializations = selectedDivineParentData.effects.filter((effect) => effect.requiresUserInput)
+      for (const effect of requiredSpecializations) {
+        const userInput = divineParentUserSpecializations[effect.skillName]
+        if (!userInput || !userInput.trim()) {
+          alert(`É obrigatório especificar a especialização para "${effect.skillName}"`)
+          return
+        }
+      }
     }
 
     const { skills, globalEffects } = calculateFinalSkills(
@@ -545,37 +554,3 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
     </AddMemberModalLayout>
   )
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

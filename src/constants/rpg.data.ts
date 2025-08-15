@@ -534,7 +534,13 @@ export const allDivineParents: DivineParentData[] = [
     effects: [
       { skillName: "Medicina", value: 2, category: "complementary" },
       { skillName: "Atletismo", value: 2, category: "complementary" },
-      { skillName: "Artes", value: 2, category: "arts", requiresUserInput: true, userInputPlaceholder: "Ex: Música, Poesia ou similares" },
+      {
+        skillName: "Artes",
+        value: 2,
+        category: "arts",
+        requiresUserInput: true,
+        userInputPlaceholder: "Ex: Música, Poesia ou similares",
+      },
     ],
     tagClass: "bg-orange-500 text-white",
   },
@@ -834,7 +840,13 @@ export const allDivineParents: DivineParentData[] = [
     effects: [
       { skillName: "Prestidigitação", value: 2, category: "utility" },
       { skillName: "Acrobacia", value: 2, category: "complementary" },
-      { skillName: "Artes", value: 2, category: "arts", requiresUserInput: true, userInputPlaceholder: "Ex: Dança, música ou similares" },
+      {
+        skillName: "Artes",
+        value: 2,
+        category: "arts",
+        requiresUserInput: true,
+        userInputPlaceholder: "Ex: Dança, música ou similares",
+      },
     ],
     tagClass: "bg-sky-700 text-white",
   },
@@ -845,7 +857,13 @@ export const allDivineParents: DivineParentData[] = [
     effects: [
       { skillName: "Lábia", value: 2, category: "social" },
       { skillName: "Empatia", value: 2, category: "social" },
-      { skillName: "Artes", value: 2, category: "arts", requiresUserInput: true, userInputPlaceholder: "Ex: Pintura, Música ou similares" },
+      {
+        skillName: "Artes",
+        value: 2,
+        category: "arts",
+        requiresUserInput: true,
+        userInputPlaceholder: "Ex: Pintura, Música ou similares",
+      },
     ],
     tagClass: "bg-gray-900 text-white",
   },
@@ -873,7 +891,13 @@ export const allDivineParents: DivineParentData[] = [
     effects: [
       { skillName: "Sedução", value: 2, category: "social" },
       { skillName: "Lábia", value: 2, category: "social" },
-      { skillName: "Artes", value: 2, category: "arts", requiresUserInput: true, userInputPlaceholder: "Ex: Pintura, Música ou similares" },
+      {
+        skillName: "Artes",
+        value: 2,
+        category: "arts",
+        requiresUserInput: true,
+        userInputPlaceholder: "Ex: Pintura, Música ou similares",
+      },
     ],
     tagClass: "bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 text-white",
   },
@@ -1085,10 +1109,40 @@ export type InitiativeResult = {
   totalInitiative: number
 }
 
+export type SkillTestResult = {
+  id: string
+  testName?: string
+  characterName: string
+  teamName: string
+  skillType: string
+  skillName: string
+  attributeName: string
+  skillValue: number
+  attributeValue: number
+  diceRoll: number
+  totalResult: number
+  timestamp: string
+  isCombat: boolean
+  difficultyLevel?: number
+  isSuccess?: boolean
+  globalDifficultyLevel?: number
+  isGlobalSum?: boolean
+  individualDifficultyLevel?: number
+  customPhrase?: string
+  customPhraseStatus?: "success" | "failure" | "neutral"
+}
+
+export type SkillTestGroup = {
+  id: string
+  testName?: string
+  results: SkillTestResult[]
+}
+
 export type Round = {
   id: string
   name: string
   initiativeOrder: InitiativeResult[]
+  skillTestGroups?: SkillTestGroup[]
   createdAt: string
 }
 
@@ -1106,23 +1160,3 @@ export type BattleSheet = {
 }
 
 type RPType = "Oficial" | "Semi-Oficial" | "Livre"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

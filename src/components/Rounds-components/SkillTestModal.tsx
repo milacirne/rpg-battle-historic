@@ -1,3 +1,5 @@
+"use client"
+
 import { useState, useMemo, useEffect } from "react"
 import type { Member, InitiativeResult } from "../../constants/rpg.data"
 import {
@@ -171,6 +173,8 @@ export function SkillTestModal({
     if (isSpecializationCategory(skillName) && specializationInput) {
       const normalizedInput = normalizeSpecialization(specializationInput)
 
+      const derivedGlobalSkillEffects = member.derivedGlobalSkillEffects || []
+
       const specializations = member.baseSkills?.specialization || {}
       const categoryKey = Object.keys(specializationCategories).find(
         (key) => specializationCategories[key as keyof typeof specializationCategories] === skillName,
@@ -183,7 +187,26 @@ export function SkillTestModal({
         )
 
         if (foundSpecialization) {
-          return categorySpecializations[foundSpecialization]
+          let finalValue: number = (categorySpecializations as Record<string, number>)[foundSpecialization] || 0
+
+          const individualEffect = derivedGlobalSkillEffects.find(
+            (effect) =>
+              effect.type === "individual" &&
+              normalizeSpecialization(effect.skillName) === normalizedInput &&
+              effect.category === categoryKey,
+          )
+          if (individualEffect) {
+            finalValue += individualEffect.value
+          }
+
+          const categoryEffect = derivedGlobalSkillEffects.find(
+            (effect) => effect.type === "category" && effect.category === categoryKey,
+          )
+          if (categoryEffect) {
+            finalValue += categoryEffect.value
+          }
+
+          return finalValue
         } else {
           return -2
         }
@@ -196,28 +219,46 @@ export function SkillTestModal({
       return -2
     }
 
+    const derivedGlobalSkillEffects = member.derivedGlobalSkillEffects || []
+    let baseValue = 0
+
     if (member.powers?.[skillName] !== undefined) {
-      return member.powers[skillName]
-    }
+      baseValue = member.powers[skillName]
+    } else if (member.styles?.[skillName] !== undefined) {
+      baseValue = member.styles[skillName]
+    } else {
+      const skillsMap = {
+        combat: member.baseSkills?.combat || {},
+        social: member.baseSkills?.social || {},
+        utility: member.baseSkills?.utility || {},
+        complementary: member.baseSkills?.complementary || {},
+      }
 
-    if (member.styles?.[skillName] !== undefined) {
-      return member.styles[skillName]
-    }
+      for (const [categoryName, category] of Object.entries(skillsMap)) {
+        if (category[skillName] !== undefined) {
+          baseValue = category[skillName]
 
-    const skillsMap = {
-      combat: member.baseSkills?.combat || {},
-      social: member.baseSkills?.social || {},
-      utility: member.baseSkills?.utility || {},
-      complementary: member.baseSkills?.complementary || {},
-    }
+          const individualEffect = derivedGlobalSkillEffects.find(
+            (effect) =>
+              effect.type === "individual" && effect.skillName === skillName && effect.category === categoryName,
+          )
+          if (individualEffect) {
+            baseValue += individualEffect.value
+          }
 
-    for (const category of Object.values(skillsMap)) {
-      if (category[skillName] !== undefined) {
-        return category[skillName]
+          const categoryEffect = derivedGlobalSkillEffects.find(
+            (effect) => effect.type === "category" && effect.category === categoryName,
+          )
+          if (categoryEffect) {
+            baseValue += categoryEffect.value
+          }
+
+          break
+        }
       }
     }
 
-    return -2
+    return baseValue
   }
 
   const memberHasSkill = (member: Member, skillName: string, specializationInput?: string): boolean => {
@@ -434,7 +475,6 @@ export function SkillTestModal({
       let isSuccess: boolean | undefined = undefined
       if (globalDifficultyLevel !== "") {
         if (isGlobalSum) {
-          // Will be calculated after all results are processed
           isSuccess = undefined
         } else {
           isSuccess = totalResult >= globalDifficultyLevel
@@ -574,12 +614,17 @@ export function SkillTestModal({
           </div>
 
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center gap-x-4">
               <label className="block text-sm font-semibold text-gray-700">Frases Customizadas (opcional)</label>
               <button
                 type="button"
                 onClick={() => setShowCustomPhrasesInput(!showCustomPhrasesInput)}
-                className="flex items-center justify-center w-8 h-8 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors cursor-pointer"
+                className="flex items-center justify-center h-7 px-2 
+                  bg-gradient-to-r from-purple-500 to-purple-600 
+                  text-white rounded-lg shadow-md 
+                  hover:from-purple-600 hover:to-purple-700 
+                  active:scale-95 transition-all duration-200 
+                  cursor-pointer w-full sm:w-auto"
                 title={showCustomPhrasesInput ? "Ocultar frases customizadas" : "Adicionar frases customizadas"}
               >
                 <span className="text-lg font-bold">{showCustomPhrasesInput ? "−" : "+"}</span>
@@ -935,7 +980,7 @@ export function SkillTestModal({
 
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 sm:top-4 sm:right-4 text-gray-500 hover:text-gray-700 transition-colors"
+          className="absolute top-3 right-3 sm:top-4 sm:right-4 text-gray-500 hover:text-gray-700 transition-colors cursor-pointer"
           aria-label="Fechar modal"
         >
           <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -946,21 +991,4 @@ export function SkillTestModal({
     </div>
   )
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

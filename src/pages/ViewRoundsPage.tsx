@@ -3,7 +3,7 @@ import type React from "react"
 import { useNavigate, useParams, useLocation } from "react-router-dom"
 import { FaChevronLeft, FaChevronRight, FaHome } from "react-icons/fa"
 import { useState, useEffect, useMemo } from "react"
-import type { BattleSheet, Round, InitiativeResult } from "../constants/rpg.data"
+import type { BattleSheet, Round, InitiativeResult, SkillTestGroup } from "../constants/rpg.data"
 
 type Props = {
   sheets: BattleSheet[]
@@ -113,69 +113,172 @@ export default function ViewRoundsPage({ sheets }: Props) {
       </div>
 
       {currentRound ? (
-        <div className="bg-white p-3 sm:p-4 rounded-xl shadow-lg mt-6 border border-gray-200">
-          <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-gray-800 text-center">Ordem de Iniciativa</h3>
-          {currentRound.initiativeOrder.length > 0 ? (
-            <ol className="space-y-2 sm:space-y-3">
-              {currentRound.initiativeOrder.map((result: InitiativeResult, index: number) => (
-                <li
-                  key={result.memberId}
-                  className={`flex flex-col sm:flex-row items-center justify-between p-2 sm:p-3 rounded-lg shadow-sm transition-all duration-200
-                ${
-                  result.teamName === team1Name
-                    ? "bg-blue-50 border-l-4 border-blue-500"
-                    : "bg-red-50 border-l-4 border-red-500"
-                }
-              `}
-                >
-                  <div className="flex items-center gap-1 sm:gap-2 mb-1 sm:mb-0">
-                    <span className="text-lg sm:text-xl font-extrabold text-gray-700 w-6 sm:w-7 text-center">
-                      {index + 1}.
-                    </span>
-                    <span className="font-semibold text-gray-900 text-sm sm:text-base">
-                      {result.name} (
-                      <span
-                        className="font-bold"
-                        style={{
-                          color:
-                            result.teamName === team1Name
-                              ? "#2563EB"
-                              : mission.team2Name === result.teamName
-                                ? "#DC2626"
-                                : "#6B7280",
-                        }}
-                      >
-                        {result.teamName}
+        <div className="space-y-6">
+          <div className="bg-white p-3 sm:p-4 rounded-xl shadow-lg border border-gray-200">
+            <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-gray-800 text-center">Ordem de Iniciativa</h3>
+            {currentRound.initiativeOrder.length > 0 ? (
+              <ol className="space-y-2 sm:space-y-3">
+                {currentRound.initiativeOrder.map((result: InitiativeResult, index: number) => (
+                  <li
+                    key={result.memberId}
+                    className={`flex flex-col sm:flex-row items-center justify-between p-2 sm:p-3 rounded-lg shadow-sm transition-all duration-200
+                  ${
+                    result.teamName === team1Name
+                      ? "bg-blue-50 border-l-4 border-blue-500"
+                      : "bg-red-50 border-l-4 border-red-500"
+                  }
+                `}
+                  >
+                    <div className="flex items-center gap-1 sm:gap-2 mb-1 sm:mb-0">
+                      <span className="text-lg sm:text-xl font-extrabold text-gray-700 w-6 sm:w-7 text-center">
+                        {index + 1}.
                       </span>
-                      )
-                    </span>
-                  </div>
-                  <div className="text-gray-700 text-xs sm:text-sm flex items-center gap-1">
-                    Iniciativa:{" "}
-                    <span className="font-medium text-gray-800">
-                      {result.baseInitiative} <span className="text-gray-500">(base)</span>{" "}
-                      <span className="text-gray-500">+</span> {result.diceRoll}{" "}
-                      <span className="text-gray-500">(dados)</span>
-                      {result.perkModifierApplied !== 0 && (
-                        <span className={`ml-1 ${result.perkModifierApplied > 0 ? "text-green-600" : "text-red-600"}`}>
-                          {result.perkModifierApplied > 0 ? "+" : ""}
-                          {result.perkModifierApplied}{" "}
-                          <span className="text-gray-500">
-                            ({result.perkModifierApplied > 0 ? "coragem" : "covardia"})
+                      <span className="font-semibold text-gray-900 text-sm sm:text-base">
+                        {result.name} (
+                        <span
+                          className="font-bold"
+                          style={{
+                            color:
+                              result.teamName === team1Name
+                                ? "#2563EB"
+                                : mission.team2Name === result.teamName
+                                  ? "#DC2626"
+                                  : "#6B7280",
+                          }}
+                        >
+                          {result.teamName}
+                        </span>
+                        )
+                      </span>
+                    </div>
+                    <div className="text-gray-700 text-xs sm:text-sm flex items-center gap-1">
+                      Iniciativa:{" "}
+                      <span className="font-medium text-gray-800">
+                        {result.baseInitiative} <span className="text-gray-500">(base)</span>{" "}
+                        <span className="text-gray-500">+</span> {result.diceRoll}{" "}
+                        <span className="text-gray-500">(dados)</span>
+                        {result.perkModifierApplied !== 0 && (
+                          <span
+                            className={`ml-1 ${result.perkModifierApplied > 0 ? "text-green-600" : "text-red-600"}`}
+                          >
+                            {result.perkModifierApplied > 0 ? "+" : ""}
+                            {result.perkModifierApplied}{" "}
+                            <span className="text-gray-500">
+                              ({result.perkModifierApplied > 0 ? "coragem" : "covardia"})
+                            </span>
                           </span>
+                        )}
+                      </span>{" "}
+                      <span className="text-gray-500">=</span>{" "}
+                      <span className="font-extrabold text-base sm:text-lg text-purple-700">
+                        {result.totalInitiative}
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <p className="text-gray-500 text-center py-4">Nenhuma ordem de iniciativa registrada para esta rodada.</p>
+            )}
+          </div>
+
+          {currentRound.skillTestGroups && currentRound.skillTestGroups.length > 0 && (
+            <div className="space-y-4">
+              {currentRound.skillTestGroups.map((group: SkillTestGroup) => (
+                <div key={group.id} className="bg-white p-3 sm:p-4 rounded-xl shadow-lg border border-gray-200">
+                  <div className="mb-3">
+                    <h3 className="text-lg sm:text-xl font-bold text-gray-800">
+                      {group.testName || "Teste de Perícia"}
+                    </h3>
+                  </div>
+
+                  {(group.results[0]?.globalDifficultyLevel || group.results[0]?.individualDifficultyLevel) && (
+                    <div className="mb-3 text-sm text-gray-600">
+                      {group.results[0].globalDifficultyLevel && (
+                        <span className="font-medium">
+                          Nível de Dificuldade Global: {group.results[0].globalDifficultyLevel}
+                          {group.results[0].isGlobalSum && " (Somatório)"}
                         </span>
                       )}
-                    </span>{" "}
-                    <span className="text-gray-500">=</span>{" "}
-                    <span className="font-extrabold text-base sm:text-lg text-purple-700">
-                      {result.totalInitiative}
-                    </span>
+                    </div>
+                  )}
+
+                  <div className="space-y-2 sm:space-y-3">
+                    {group.results.map((result) => (
+                      <div
+                        key={result.id}
+                        className={`flex flex-col sm:flex-row items-center justify-between p-2 sm:p-3 rounded-lg shadow-sm transition-all duration-200 ${
+                          result.teamName === team1Name
+                            ? "bg-blue-50 border-l-4 border-blue-500"
+                            : "bg-red-50 border-l-4 border-red-500"
+                        }`}
+                      >
+                        <div className="flex items-center gap-1 sm:gap-2 mb-1 sm:mb-0">
+                          <span className="font-semibold text-gray-900 text-sm sm:text-base">
+                            {result.characterName} (
+                            <span
+                              className="font-bold"
+                              style={{ color: result.teamName === team1Name ? "#2563EB" : "#DC2626" }}
+                            >
+                              {result.teamName}
+                            </span>
+                            )
+                            {result.customPhrase && (
+                              <span
+                                className={`font-normal ml-1 italic ${
+                                  result.customPhraseStatus === "success"
+                                    ? "font-bold text-green-700"
+                                    : result.customPhraseStatus === "failure"
+                                      ? "font-bold text-red-700"
+                                      : "text-gray-600"
+                                }`}
+                              >
+                                {result.customPhrase}
+                              </span>
+                            )}
+                          </span>
+                        </div>
+                        <div className="text-gray-700 text-xs sm:text-sm flex items-center gap-1">
+                          <span className="font-medium text-gray-800">
+                            {result.skillName} + {result.attributeName}
+                          </span>
+                          <span className="text-gray-500">=</span>
+                          <span className="font-medium text-gray-800">
+                            {result.skillValue} + {result.attributeValue} + {result.diceRoll}
+                          </span>
+                          <span className="text-gray-500">=</span>
+                          <span
+                            className={`font-extrabold text-base sm:text-lg ${
+                              result.isSuccess === true
+                                ? "text-green-700"
+                                : result.isSuccess === false
+                                  ? "text-red-700"
+                                  : "text-green-700"
+                            }`}
+                          >
+                            {result.totalResult}
+                            {result.isSuccess !== undefined && (
+                              <span
+                                className={`ml-1 text-xs font-medium ${
+                                  result.isSuccess ? "text-green-600" : "text-red-600"
+                                }`}
+                              >
+                                ({result.isSuccess ? "Sucesso" : "Falha"})
+                              </span>
+                            )}
+                            {result.individualDifficultyLevel && (
+                              <span className="ml-1 text-xs text-gray-500">
+                                (Dif: {result.individualDifficultyLevel})
+                              </span>
+                            )}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                </li>
+                </div>
               ))}
-            </ol>
-          ) : (
-            <p className="text-gray-500 text-center py-4">Nenhuma ordem de iniciativa registrada para esta rodada.</p>
+            </div>
           )}
         </div>
       ) : (
@@ -186,6 +289,7 @@ export default function ViewRoundsPage({ sheets }: Props) {
     </div>
   )
 }
+
 
 
 

@@ -1,12 +1,10 @@
-"use client"
-
 import type React from "react"
 
 import { useNavigate, useParams, useLocation } from "react-router-dom"
 import { FaChevronLeft, FaDiceD20, FaHome, FaPlus, FaFlask, FaDice } from "react-icons/fa"
 import { useState } from "react"
 import { CalculateInitiativesModal } from "../components/Rounds-components/CalculateInitiativesModal"
-import type { Member, Round, InitiativeResult } from "../constants/rpg.data"
+import type { Member, Round, InitiativeResult, SkillTestGroup } from "../constants/rpg.data"
 import { v4 as uuidv4 } from "uuid"
 import { SkillTestModal } from "../components/Rounds-components/SkillTestModal"
 
@@ -176,10 +174,18 @@ export default function AddRoundPage({ sheets, setSheets }: Props) {
     if (!mission) return
 
     const nextRoundNumber = (mission.rounds?.length || 0) + 1
+
+    const skillTestGroupsArray: SkillTestGroup[] = Object.entries(skillTestGroups).map(([groupId, results]) => ({
+      id: groupId,
+      testName: results[0]?.testName,
+      results: results,
+    }))
+
     const newRound: Round = {
       id: uuidv4(),
       name: `Rodada ${nextRoundNumber}`,
       initiativeOrder: initiativeOrder,
+      skillTestGroups: skillTestGroupsArray,
       createdAt: new Date().toISOString(),
     }
 
@@ -239,11 +245,7 @@ export default function AddRoundPage({ sheets, setSheets }: Props) {
 
         <button
           onClick={() => setIsSkillTestModalOpen(true)}
-          className={`px-5 py-2 sm:px-6 sm:py-3 rounded-lg text-base sm:text-lg font-semibold transition-all duration-300 flex items-center gap-2 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 cursor-pointer ${
-            initiativeOrder.length === 0
-              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-              : "bg-green-600 text-white hover:bg-green-700"
-          }`}
+          className={`px-5 py-2 sm:px-6 sm:py-3 rounded-lg text-base sm:text-lg font-semibold transition-all duration-300 flex items-center gap-2 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 cursor-pointer ${initiativeOrder.length === 0 ? "bg-gray-300 text-gray-500 cursor-not-allowed" : "bg-green-600 text-white hover:bg-green-700"}`}
           disabled={initiativeOrder.length === 0}
           title={
             initiativeOrder.length === 0
@@ -266,13 +268,7 @@ export default function AddRoundPage({ sheets, setSheets }: Props) {
               {initiativeOrder.map((result, index) => (
                 <li
                   key={result.memberId}
-                  className={`flex flex-col sm:flex-row items-center justify-between p-2 sm:p-3 rounded-lg shadow-sm transition-all duration-200
-                ${
-                  result.teamName === team1Name
-                    ? "bg-blue-50 border-l-4 border-blue-500"
-                    : "bg-red-50 border-l-4 border-red-500"
-                }
-              `}
+                  className={`flex flex-col sm:flex-row items-center justify-between p-2 sm:p-3 rounded-lg shadow-sm transition-all duration-200 ${result.teamName === team1Name ? "bg-blue-50 border-l-4 border-blue-500" : "bg-red-50 border-l-4 border-red-500"}`}
                 >
                   <div className="flex items-center gap-1 sm:gap-2 mb-1 sm:mb-0">
                     <span className="text-lg sm:text-xl font-extrabold text-gray-700 w-6 sm:w-7 text-center">
@@ -373,9 +369,6 @@ export default function AddRoundPage({ sheets, setSheets }: Props) {
                             {firstResult.isGlobalSum && " (Somatório)"}
                           </span>
                         )}
-                        {!firstResult.globalDifficultyLevel && firstResult.individualDifficultyLevel && (
-                          <span className="font-medium">Dificuldades Individuais</span>
-                        )}
                       </div>
                     )}
 
@@ -389,11 +382,7 @@ export default function AddRoundPage({ sheets, setSheets }: Props) {
                         return (
                           <div
                             key={result.id}
-                            className={`flex flex-col sm:flex-row items-center justify-between p-2 sm:p-3 rounded-lg shadow-sm transition-all duration-200 ${
-                              result.teamName === team1Name
-                                ? "bg-blue-50 border-l-4 border-blue-500"
-                                : "bg-red-50 border-l-4 border-red-500"
-                            }`}
+                            className={`flex flex-col sm:flex-row items-center justify-between p-2 sm:p-3 rounded-lg shadow-sm transition-all duration-200 ${result.teamName === team1Name ? "bg-blue-50 border-l-4 border-blue-500" : "bg-red-50 border-l-4 border-red-500"}`}
                           >
                             <div className="flex items-center gap-1 sm:gap-2 mb-1 sm:mb-0">
                               <span className="font-semibold text-gray-900 text-sm sm:text-base">
@@ -407,13 +396,7 @@ export default function AddRoundPage({ sheets, setSheets }: Props) {
                                 )
                                 {result.customPhrase && (
                                   <span
-                                    className={`font-normal ml-1 italic ${
-                                      result.customPhraseStatus === "success"
-                                        ? "font-bold text-green-700"
-                                        : result.customPhraseStatus === "failure"
-                                          ? "font-bold text-red-700"
-                                          : "text-gray-600"
-                                    }`}
+                                    className={`font-normal ml-1 italic ${result.customPhraseStatus === "success" ? "font-bold text-green-700" : result.customPhraseStatus === "failure" ? "font-bold text-red-700" : "text-gray-600"}`}
                                   >
                                     {result.customPhrase}
                                   </span>
@@ -436,20 +419,12 @@ export default function AddRoundPage({ sheets, setSheets }: Props) {
                               </span>
                               <span className="text-gray-500">=</span>
                               <span
-                                className={`font-extrabold text-base sm:text-lg ${
-                                  result.isSuccess === true
-                                    ? "text-green-700"
-                                    : result.isSuccess === false
-                                      ? "text-red-700"
-                                      : "text-green-700"
-                                }`}
+                                className={`font-extrabold text-base sm:text-lg ${result.isSuccess === true ? "text-green-700" : result.isSuccess === false ? "text-red-700" : "text-green-700"}`}
                               >
                                 {result.totalResult}
                                 {result.isSuccess !== undefined && (
                                   <span
-                                    className={`ml-1 text-xs font-medium ${
-                                      result.isSuccess ? "text-green-600" : "text-red-600"
-                                    }`}
+                                    className={`ml-1 text-xs font-medium ${result.isSuccess ? "text-green-600" : "text-red-600"}`}
                                   >
                                     ({result.isSuccess ? "Sucesso" : "Falha"})
                                   </span>
@@ -511,28 +486,3 @@ export default function AddRoundPage({ sheets, setSheets }: Props) {
     </div>
   )
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
