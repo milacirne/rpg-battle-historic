@@ -400,10 +400,19 @@ export const allTrejeitos: TrejeitoData[] = [
 
 export const allPerks: PerkData[] = [
   { name: "Coragem", description: "Em situações de perigo, o personagem receberá +10 em Iniciativa." },
+  {
+    name: "Sorte",
+    description:
+      "Toda vez que o personagem obter 10 ao rolar 1d10, algo maravilhoso acontecerá, a critério do narrador.",
+  },
 ]
 
 export const allHindrances: HindranceData[] = [
   { name: "Covardia", description: "Em situações de perigo, o personagem receberá -10 em Iniciativa." },
+  {
+    name: "Azar",
+    description: "Toda vez que o personagem obter 1 ao rolar 1d10, algo horrível acontecerá, a critério do narrador.",
+  },
 ]
 
 export type DivineSkillEffect = {
