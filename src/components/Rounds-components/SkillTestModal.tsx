@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useMemo, useEffect } from "react"
 import type { Member, InitiativeResult } from "../../constants/rpg.data"
 import {
@@ -170,6 +168,7 @@ export function SkillTestModal({
   }
 
   const getSkillValue = (member: Member, skillName: string, specializationInput?: string): number => {
+
     if (isSpecializationCategory(skillName) && specializationInput) {
       const normalizedInput = normalizeSpecialization(specializationInput)
 
@@ -180,32 +179,37 @@ export function SkillTestModal({
         (key) => specializationCategories[key as keyof typeof specializationCategories] === skillName,
       )
 
-      if (categoryKey && specializations[categoryKey as keyof typeof specializations]) {
+      if (categoryKey) {
         const categorySpecializations = specializations[categoryKey as keyof typeof specializations] || {}
+
         const foundSpecialization = Object.keys(categorySpecializations).find(
           (spec) => normalizeSpecialization(spec) === normalizedInput,
         )
 
+        let finalValue = 0
+
         if (foundSpecialization) {
-          let finalValue: number = (categorySpecializations as Record<string, number>)[foundSpecialization] || 0
+          finalValue = (categorySpecializations as Record<string, number>)[foundSpecialization] || 0
+        }
 
-          const individualEffect = derivedGlobalSkillEffects.find(
-            (effect) =>
-              effect.type === "individual" &&
-              normalizeSpecialization(effect.skillName) === normalizedInput &&
-              effect.category === categoryKey,
-          )
-          if (individualEffect) {
-            finalValue += individualEffect.value
-          }
+        const individualEffect = derivedGlobalSkillEffects.find(
+          (effect) =>
+            effect.type === "individual" &&
+            effect.category === categoryKey &&
+            normalizeSpecialization(effect.skillName || "") === normalizedInput,
+        )
+        if (individualEffect) {
+          finalValue += individualEffect.value
+        }
 
-          const categoryEffect = derivedGlobalSkillEffects.find(
-            (effect) => effect.type === "category" && effect.category === categoryKey,
-          )
-          if (categoryEffect) {
-            finalValue += categoryEffect.value
-          }
+        const categoryEffect = derivedGlobalSkillEffects.find(
+          (effect) => effect.type === "category" && effect.category === categoryKey,
+        )
+        if (categoryEffect) {
+          finalValue += categoryEffect.value
+        }
 
+        if (finalValue > 0) {
           return finalValue
         } else {
           return -2
@@ -645,7 +649,7 @@ export function SkillTestModal({
                   <button
                     type="button"
                     onClick={handleAddCustomPhrase}
-                    className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-sm font-medium cursor-pointer"
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium cursor-pointer w-full sm:w-auto"
                   >
                     Adicionar
                   </button>
@@ -991,4 +995,3 @@ export function SkillTestModal({
     </div>
   )
 }
-
