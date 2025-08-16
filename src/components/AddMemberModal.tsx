@@ -137,6 +137,13 @@ export default function AddMemberModal({ teamName, teamColor, onClose, onAddMemb
   const selectedDivineParentData = allDivineParents.find((dp) => dp.name === divineParent)
 
   useEffect(() => {
+    if (type !== "semideus" && divineParent) {
+      setDivineParent("")
+      setDivineParentUserSpecializations({})
+    }
+  }, [type, divineParent])
+
+  useEffect(() => {
     if (selectedDivineParentData) {
       const newUserSpecializations: Record<string, string> = {}
       let hasNewFields = false

@@ -58,7 +58,7 @@ export const allPowers = [
   "Debilitação",
   "Purificação",
   "Regeneração",
-  "Viacinese",
+  "Vitacinese",
   "Transmutação",
   "Instinto de Batalha",
   "Amplificação",

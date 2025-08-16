@@ -20,7 +20,8 @@ export function SkillCategoryInput({ skills, values, setValues, teamColor }: Ski
                 type="button"
                 onClick={() =>
                   setValues((prev) => {
-                    const newVal = val === 0 ? 0 : val
+                    const currentValue = prev[skill] || 0
+                    const newVal = currentValue === val ? 0 : val
                     return { ...prev, [skill]: newVal }
                   })
                 }
