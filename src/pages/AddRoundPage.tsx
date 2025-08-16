@@ -45,6 +45,7 @@ type SkillTestResult = {
   individualDifficultyLevel?: number
   customPhrase?: string
   customPhraseStatus?: "success" | "failure" | "neutral"
+  isGambiarra?: boolean
 }
 
 export default function AddRoundPage({ sheets, setSheets }: Props) {
@@ -382,6 +383,7 @@ export default function AddRoundPage({ sheets, setSheets }: Props) {
                         const hasSorte = member?.perks?.includes("Sorte") || false
                         const isAzarTriggered = hasAzar && result.diceRoll === 1
                         const isSorteTriggered = hasSorte && result.diceRoll === 10
+                        const isGambiarraUsed = result.isGambiarra || false
 
                         let containerClass = `flex flex-col sm:flex-row items-center justify-between p-2 sm:p-3 rounded-lg shadow-sm transition-all duration-200 ${result.teamName === team1Name ? "bg-blue-50 border-l-4 border-blue-500" : "bg-red-50 border-l-4 border-red-500"}`
 
@@ -389,20 +391,25 @@ export default function AddRoundPage({ sheets, setSheets }: Props) {
                           containerClass = `flex flex-col sm:flex-row items-center justify-between p-2 sm:p-3 rounded-lg shadow-lg transition-all duration-300 bg-gradient-to-r from-slate-50 to-gray-100 border border-slate-300 relative overflow-hidden`
                         } else if (isSorteTriggered) {
                           containerClass = `flex flex-col sm:flex-row items-center justify-between p-2 sm:p-3 rounded-lg shadow-lg transition-all duration-300 bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 relative overflow-hidden`
+                        } else if (isGambiarraUsed) {
+                          containerClass = `flex flex-col sm:flex-row items-center justify-between p-2 sm:p-3 rounded-lg shadow-lg transition-all duration-300 bg-gradient-to-r from-green-50 to-lime-100 border border-green-300 relative overflow-hidden`
                         }
 
                         return (
                           <div key={result.id} className={containerClass}>
                             {isAzarTriggered && (
-                              <div className="absolute inset-0 bg-gradient-to-r from-slate-600/20 to-gray-300/20 pointer-events-none" />
+                              <div className="absolute inset-0 bg-gradient-to-r from-slate-200/20 to-gray-300/20 pointer-events-none" />
                             )}
                             {isSorteTriggered && (
                               <div className="absolute inset-0 bg-gradient-to-r from-amber-200/30 to-yellow-200/30 pointer-events-none animate-pulse" />
                             )}
+                            {isGambiarraUsed && (
+                              <div className="absolute inset-0 bg-gradient-to-r from-green-200/30 to-lime-200/30 pointer-events-none animate-pulse" />
+                            )}
 
                             <div className="flex items-center gap-1 sm:gap-2 mb-1 sm:mb-0 relative z-10">
                               <span
-                                className={`font-semibold text-sm sm:text-base ${isAzarTriggered ? "text-slate-700" : isSorteTriggered ? "text-amber-800" : "text-gray-900"}`}
+                                className={`font-semibold text-sm sm:text-base ${isAzarTriggered ? "text-slate-700" : isSorteTriggered ? "text-amber-800" : isGambiarraUsed ? "text-green-700" : "text-gray-900"}`}
                               >
                                 {result.characterName} (
                                 <span
@@ -412,9 +419,11 @@ export default function AddRoundPage({ sheets, setSheets }: Props) {
                                       ? "#475569"
                                       : isSorteTriggered
                                         ? "#92400e"
-                                        : result.teamName === team1Name
-                                          ? "#2563EB"
-                                          : "#DC2626",
+                                        : isGambiarraUsed
+                                          ? "#16a34a"
+                                          : result.teamName === team1Name
+                                            ? "#2563EB"
+                                            : "#DC2626",
                                   }}
                                 >
                                   {result.teamName}
@@ -422,7 +431,7 @@ export default function AddRoundPage({ sheets, setSheets }: Props) {
                                 )
                                 {result.customPhrase && (
                                   <span
-                                    className={`font-normal ml-1 italic ${result.customPhraseStatus === "success" ? "font-bold text-green-700" : result.customPhraseStatus === "failure" ? "font-bold text-red-700" : isAzarTriggered ? "text-slate-600" : isSorteTriggered ? "text-amber-700" : "text-gray-600"}`}
+                                    className={`font-normal ml-1 italic ${result.customPhraseStatus === "success" ? "font-bold text-green-700" : result.customPhraseStatus === "failure" ? "font-bold text-red-700" : isAzarTriggered ? "text-slate-600" : isSorteTriggered ? "text-amber-700" : isGambiarraUsed ? "text-green-600" : "text-gray-600"}`}
                                   >
                                     {result.customPhrase}
                                   </span>
@@ -440,96 +449,116 @@ export default function AddRoundPage({ sheets, setSheets }: Props) {
                                   Sorte
                                 </span>
                               )}
+                              {isGambiarraUsed && (
+                                <span className="ml-2 px-3 py-1 bg-green-600 text-white text-xs font-medium rounded-full shadow-sm border border-green-700 flex items-center gap-1">
+                                  <span className="w-1.5 h-1.5 bg-green-300 rounded-full animate-pulse"></span>
+                                  Gambiarra
+                                </span>
+                              )}
                             </div>
                             <div
-                              className={`text-xs sm:text-sm flex items-center gap-1 relative z-10 ${isAzarTriggered ? "text-slate-600" : isSorteTriggered ? "text-amber-700" : "text-gray-700"}`}
+                              className={`text-xs sm:text-sm flex items-center gap-1 relative z-10 ${isAzarTriggered ? "text-slate-600" : isSorteTriggered ? "text-amber-700" : isGambiarraUsed ? "text-green-600" : "text-gray-700"}`}
                             >
-                              <span
-                                className={`font-medium ${isAzarTriggered ? "text-slate-700" : isSorteTriggered ? "text-amber-800" : "text-gray-800"}`}
-                              >
-                                {correctedSkillName} + {result.attributeName}
-                              </span>
-                              <span
-                                className={
-                                  isAzarTriggered
-                                    ? "text-slate-500"
-                                    : isSorteTriggered
-                                      ? "text-amber-600"
-                                      : "text-gray-500"
-                                }
-                              >
-                                =
-                              </span>
-                              <span
-                                className={`font-medium ${isAzarTriggered ? "text-slate-700" : isSorteTriggered ? "text-amber-800" : "text-gray-800"}`}
-                              >
-                                {result.skillValue} + {result.attributeValue} +
-                                <span className="inline-flex items-center gap-1 mx-1">
-                                  <FaDice
-                                    className={`${isAzarTriggered ? "text-slate-500" : isSorteTriggered ? "text-amber-600" : "text-purple-600"}`}
-                                    size={12}
-                                  />
+                              {isGambiarraUsed ? (
+                                <span className="font-extrabold text-base sm:text-lg text-green-700">Sucesso</span>
+                              ) : (
+                                <>
                                   <span
-                                    className={`px-1.5 py-0.5 rounded font-bold text-xs ${
-                                      isAzarTriggered
-                                        ? "bg-slate-200 text-slate-800 border border-slate-300"
-                                        : isSorteTriggered
-                                          ? "bg-amber-200 text-amber-900 border border-amber-300"
-                                          : "bg-purple-100 text-purple-800"
-                                    }`}
+                                    className={`font-medium ${isAzarTriggered ? "text-slate-700" : isSorteTriggered ? "text-amber-800" : "text-gray-800"}`}
                                   >
-                                    {result.diceRoll}
+                                    {correctedSkillName} + {result.attributeName}
                                   </span>
-                                </span>
-                              </span>
-                              <span
-                                className={
-                                  isAzarTriggered
-                                    ? "text-slate-500"
-                                    : isSorteTriggered
-                                      ? "text-amber-600"
-                                      : "text-gray-500"
-                                }
-                              >
-                                =
-                              </span>
-                              <span
-                                className={`font-extrabold text-base sm:text-lg ${
-                                  isAzarTriggered
-                                    ? "text-slate-700"
-                                    : isSorteTriggered
-                                      ? "text-amber-800"
-                                      : result.isSuccess === true
-                                        ? "text-green-700"
-                                        : result.isSuccess === false
-                                          ? "text-red-700"
-                                          : "text-green-700"
-                                }`}
-                              >
-                                {result.totalResult}
-                                {result.isSuccess !== undefined && (
                                   <span
-                                    className={`ml-1 text-xs font-medium ${
+                                    className={
                                       isAzarTriggered
-                                        ? "text-slate-600"
+                                        ? "text-slate-500"
                                         : isSorteTriggered
-                                          ? "text-amber-700"
-                                          : result.isSuccess
+                                          ? "text-amber-600"
+                                          : "text-gray-500"
+                                    }
+                                  >
+                                    =
+                                  </span>
+                                  <span
+                                    className={`font-medium ${isAzarTriggered ? "text-slate-700" : isSorteTriggered ? "text-amber-800" : "text-gray-800"}`}
+                                  >
+                                    {result.skillValue} + {result.attributeValue} +
+                                    <span className="inline-flex items-center gap-1 mx-1">
+                                      <FaDice
+                                        className={`${isAzarTriggered ? "text-slate-500" : isSorteTriggered ? "text-amber-600" : isGambiarraUsed ? "text-green-600" : "text-purple-600"}`}
+                                        size={12}
+                                      />
+                                      <span
+                                        className={`px-1.5 py-0.5 rounded font-bold text-xs ${
+                                          isAzarTriggered
+                                            ? "bg-slate-200 text-slate-800 border border-slate-300"
+                                            : isSorteTriggered
+                                              ? "bg-amber-200 text-amber-900 border border-amber-300"
+                                              : isGambiarraUsed
+                                                ? "bg-green-200 text-green-800 border border-green-300"
+                                                : "bg-purple-100 text-purple-800"
+                                        }`}
+                                      >
+                                        {result.diceRoll}
+                                      </span>
+                                    </span>
+                                  </span>
+                                  <span
+                                    className={
+                                      isAzarTriggered
+                                        ? "text-slate-500"
+                                        : isSorteTriggered
+                                          ? "text-amber-600"
+                                          : isGambiarraUsed
                                             ? "text-green-600"
-                                            : "text-red-600"
+                                            : "text-gray-500"
+                                    }
+                                  >
+                                    =
+                                  </span>
+                                  <span
+                                    className={`font-extrabold text-base sm:text-lg ${
+                                      isAzarTriggered
+                                        ? "text-slate-700"
+                                        : isSorteTriggered
+                                          ? "text-amber-800"
+                                          : isGambiarraUsed
+                                            ? "text-green-700"
+                                            : result.isSuccess === true
+                                              ? "text-green-700"
+                                              : result.isSuccess === false
+                                                ? "text-red-700"
+                                                : "text-green-700"
                                     }`}
                                   >
-                                    ({result.isSuccess ? "Sucesso" : "Falha"})
+                                    {result.totalResult}
+                                    {result.isSuccess !== undefined && (
+                                      <span
+                                        className={`ml-1 text-xs font-medium ${
+                                          isAzarTriggered
+                                            ? "text-slate-600"
+                                            : isSorteTriggered
+                                              ? "text-amber-700"
+                                              : isGambiarraUsed
+                                                ? "text-green-600"
+                                                : result.isSuccess
+                                                  ? "text-green-600"
+                                                  : "text-red-600"
+                                        }`}
+                                      >
+                                        ({result.isSuccess ? "Sucesso" : "Falha"})
+                                      </span>
+                                    )}
+                                    {result.individualDifficultyLevel && (
+                                      <span
+                                        className={`ml-1 text-xs ${isAzarTriggered ? "text-slate-500" : isSorteTriggered ? "text-amber-600" : isGambiarraUsed ? "text-green-600" : "text-gray-500"}`}
+                                      >
+                                        (Dif: {result.individualDifficultyLevel})
+                                      </span>
+                                    )}
                                   </span>
-                                )}
-                                {result.individualDifficultyLevel && (
-                                  <span
-                                    className={`ml-1 text-xs ${isAzarTriggered ? "text-slate-500" : isSorteTriggered ? "text-amber-600" : "text-gray-500"}`}
-                                  >
-                                    (Dif: {result.individualDifficultyLevel})
-                                  </span>
-                                )}
-                              </span>
+                                </>
+                              )}
                             </div>
                           </div>
                         )

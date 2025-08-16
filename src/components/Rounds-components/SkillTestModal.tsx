@@ -30,6 +30,7 @@ type SkillTestResult = {
   individualDifficultyLevel?: number
   customPhrase?: string
   customPhraseStatus?: "success" | "failure" | "neutral"
+  isGambiarra?: boolean
 }
 
 type SkillTestModalProps = {
@@ -93,6 +94,8 @@ export function SkillTestModal({
   const [customPhrases, setCustomPhrases] = useState<string[]>([])
   const [newPhrase, setNewPhrase] = useState("")
   const [showCustomPhrasesInput, setShowCustomPhrasesInput] = useState(false)
+  const [gambiarraUsed, setGambiarraUsed] = useState<{ [characterId: string]: boolean }>({})
+
   const [selectedCharacters, setSelectedCharacters] = useState<{
     [key: string]: {
       selected: boolean
@@ -105,6 +108,7 @@ export function SkillTestModal({
       individualDifficultyLevel?: number | ""
       customPhrase?: string
       customPhraseStatus?: "success" | "failure" | "neutral"
+      isGambiarra?: boolean
     }
   }>({})
 
@@ -143,6 +147,7 @@ export function SkillTestModal({
             individualDifficultyLevel: test.individualDifficultyLevel || "",
             customPhrase: test.customPhrase || "",
             customPhraseStatus: test.customPhraseStatus || "neutral",
+            isGambiarra: test.isGambiarra || false,
           }
         }
       })
@@ -168,7 +173,6 @@ export function SkillTestModal({
   }
 
   const getSkillValue = (member: Member, skillName: string, specializationInput?: string): number => {
-
     if (isSpecializationCategory(skillName) && specializationInput) {
       const normalizedInput = normalizeSpecialization(specializationInput)
 
@@ -368,6 +372,7 @@ export function SkillTestModal({
         individualDifficultyLevel: prev[characterId]?.individualDifficultyLevel || "",
         customPhrase: prev[characterId]?.customPhrase || "",
         customPhraseStatus: prev[characterId]?.customPhraseStatus || "neutral",
+        isGambiarra: false,
       },
     }))
   }
@@ -437,6 +442,32 @@ export function SkillTestModal({
     }))
   }
 
+  const characterHasGambiarra = (member: Member): boolean => {
+    return (member.perks || []).includes("Gambiarra")
+  }
+
+  const handleGambiarraToggle = (characterId: string) => {
+    setSelectedCharacters((prev) => ({
+      ...prev,
+      [characterId]: {
+        ...prev[characterId],
+        isGambiarra: !prev[characterId]?.isGambiarra,
+        // Reset other fields when gambiarra is enabled
+        skillName: prev[characterId]?.isGambiarra ? prev[characterId].skillName : "",
+        attribute: prev[characterId]?.isGambiarra ? prev[characterId].attribute : "",
+        diceRoll: prev[characterId]?.isGambiarra ? prev[characterId].diceRoll : 1,
+        individualDifficultyLevel: prev[characterId]?.isGambiarra ? prev[characterId].individualDifficultyLevel : "",
+      },
+    }))
+
+    if (!selectedCharacters[characterId]?.isGambiarra && !editingTestId) {
+      setGambiarraUsed((prev) => ({
+        ...prev,
+        [characterId]: true,
+      }))
+    }
+  }
+
   const handleSubmit = () => {
     const selectedCharacterIds = Object.keys(selectedCharacters).filter((id) => selectedCharacters[id].selected)
 
@@ -447,6 +478,12 @@ export function SkillTestModal({
 
     const invalidCharacters = selectedCharacterIds.filter((characterId) => {
       const characterData = selectedCharacters[characterId]
+
+      // If using gambiarra, no need for skill/attribute validation
+      if (characterData.isGambiarra) {
+        return false
+      }
+
       const needsSpecializationInput =
         isSpecializationCategory(characterData.skillName) && !characterData.specializationInput
       return !characterData.skillName || !characterData.attribute || needsSpecializationInput
@@ -464,6 +501,37 @@ export function SkillTestModal({
       const member = allMembers.find((m) => m.id === characterId)
       const characterData = selectedCharacters[characterId]
       if (!member || !characterData) return
+
+      if (characterData.isGambiarra) {
+        const result: SkillTestResult = {
+          id: `${Date.now()}-${Math.random()}-${characterId}`,
+          testName: testName || undefined,
+          characterName: member.name,
+          teamName: member.teamName,
+          skillType: "Gambiarra",
+          skillName: "Gambiarra",
+          attributeName: "N/A",
+          skillValue: 0,
+          attributeValue: 0,
+          diceRoll: 0,
+          totalResult: 999, // High value to ensure success
+          timestamp: new Date().toISOString(),
+          isCombat: characterData.isCombat,
+          globalDifficultyLevel: globalDifficultyLevel !== "" ? Number(globalDifficultyLevel) : undefined,
+          isGlobalSum,
+          individualDifficultyLevel:
+            characterData.individualDifficultyLevel !== ""
+              ? Number(characterData.individualDifficultyLevel)
+              : undefined,
+          isSuccess: true, // Gambiarra always succeeds
+          customPhrase: characterData.customPhrase || "",
+          customPhraseStatus: "success",
+          isGambiarra: true,
+        }
+        results.push(result)
+        totalSum += 999 // Add high value to total sum
+        return
+      }
 
       const skillValue = getSkillValue(member, characterData.skillName, characterData.specializationInput)
       const attributeValue = getAttributeWithModifiers(member, characterData.attribute as keyof Member)
@@ -519,7 +587,10 @@ export function SkillTestModal({
     if (globalDifficultyLevel !== "" && isGlobalSum) {
       const globalSuccess = totalSum >= globalDifficultyLevel
       results.forEach((result) => {
-        result.isSuccess = globalSuccess
+        if (!result.isGambiarra) {
+          // Don't override gambiarra success
+          result.isSuccess = globalSuccess
+        }
       })
     }
 
@@ -579,7 +650,7 @@ export function SkillTestModal({
                 value={testName}
                 onChange={(e) => setTestName(e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
-                placeholder="Ex: Teste de Percepção na Floresta"
+                placeholder="Ex: Teste de Furtividade"
               />
             </div>
 
@@ -698,33 +769,39 @@ export function SkillTestModal({
                   individualDifficultyLevel: "",
                   customPhrase: "",
                   customPhraseStatus: "neutral",
+                  isGambiarra: false,
                 }
 
                 const teamColorClass =
                   member.teamName === team1Name ? "text-blue-600 bg-blue-50" : "text-red-600 bg-red-50"
 
                 let successStatus: "success" | "failure" | "neutral" = "neutral"
-                if (isSelected && characterData.skillName && characterData.attribute) {
-                  const skillValue = getSkillValue(member, characterData.skillName, characterData.specializationInput)
-                  const attributeValue = getAttributeWithModifiers(member, characterData.attribute as keyof Member)
-                  const totalResult = skillValue + attributeValue + characterData.diceRoll
+                if (isSelected) {
+                  if (characterData.isGambiarra) {
+                    successStatus = "success" // Gambiarra always succeeds
+                  } else if (characterData.skillName && characterData.attribute) {
+                    const skillValue = getSkillValue(member, characterData.skillName, characterData.specializationInput)
+                    const attributeValue = getAttributeWithModifiers(member, characterData.attribute as keyof Member)
+                    const totalResult = skillValue + attributeValue + characterData.diceRoll
 
-                  if (globalDifficultyLevel !== "") {
-                    if (isGlobalSum) {
-                      successStatus = totalSum >= globalDifficultyLevel ? "success" : "failure"
-                    } else {
-                      successStatus = totalResult >= globalDifficultyLevel ? "success" : "failure"
+                    if (globalDifficultyLevel !== "") {
+                      if (isGlobalSum) {
+                        successStatus = totalSum >= globalDifficultyLevel ? "success" : "failure"
+                      } else {
+                        successStatus = totalResult >= globalDifficultyLevel ? "success" : "failure"
+                      }
+                    } else if (
+                      characterData.individualDifficultyLevel !== "" &&
+                      characterData.individualDifficultyLevel !== undefined
+                    ) {
+                      successStatus = totalResult >= characterData.individualDifficultyLevel ? "success" : "failure"
                     }
-                  } else if (
-                    characterData.individualDifficultyLevel !== "" &&
-                    characterData.individualDifficultyLevel !== undefined
-                  ) {
-                    successStatus = totalResult >= characterData.individualDifficultyLevel ? "success" : "failure"
                   }
                 }
 
-                const containerBorderClass =
-                  successStatus === "success"
+                const containerBorderClass = characterData.isGambiarra
+                  ? "border-l-4 border-yellow-500 bg-yellow-50"
+                  : successStatus === "success"
                     ? "border-l-4 border-green-500"
                     : successStatus === "failure"
                       ? "border-l-4 border-red-500"
@@ -754,126 +831,194 @@ export function SkillTestModal({
                       </div>
 
                       {isSelected && (
-                        <div className="flex items-center space-x-2">
-                          <input
-                            type="checkbox"
-                            checked={characterData.isCombat}
-                            onChange={() => handleCombatToggle(result.memberId)}
-                            className="w-4 h-4 text-red-600 focus:ring-red-500 border-gray-300 rounded cursor-pointer"
-                          />
-                          <label className="text-sm text-gray-600">Combate</label>
+                        <div className="flex items-center space-x-4">
+                          {characterHasGambiarra(member) && (
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                checked={characterData.isGambiarra || false}
+                                onChange={() => handleGambiarraToggle(result.memberId)}
+                                disabled={
+                                  !editingTestId && gambiarraUsed[result.memberId] && !characterData.isGambiarra
+                                }
+                                className="w-4 h-4 text-yellow-600 focus:ring-yellow-500 border-gray-300 rounded cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                              />
+                              <label className="text-sm text-yellow-600 font-medium">
+                                Gambiarra{" "}
+                                {!editingTestId &&
+                                  gambiarraUsed[result.memberId] &&
+                                  !characterData.isGambiarra &&
+                                  "(Usada)"}
+                              </label>
+                            </div>
+                          )}
+
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              checked={characterData.isCombat}
+                              onChange={() => handleCombatToggle(result.memberId)}
+                              disabled={characterData.isGambiarra}
+                              className="w-4 h-4 text-red-600 focus:ring-red-500 border-gray-300 rounded cursor-pointer disabled:opacity-50"
+                            />
+                            <label className="text-sm text-gray-600">Combate</label>
+                          </div>
                         </div>
                       )}
                     </div>
 
                     {isSelected && (
                       <div className="ml-7 space-y-3">
-                        <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-                          <div>
-                            <label className="block text-xs font-medium text-gray-600 mb-1">
-                              Perícia <span className="text-red-500">*</span>
-                            </label>
-                            <select
-                              value={characterData.skillName}
-                              onChange={(e) => handleSkillChange(result.memberId, e.target.value)}
-                              className="w-full text-sm border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                            >
-                              <option value="">Selecione...</option>
-                              {getAvailableSkillsForCharacter(result.memberId).map((skill) => {
-                                const isSpecialization = isSpecializationCategory(skill)
-                                const skillValue = isSpecialization ? null : getSkillValue(member, skill)
-                                const displayValue = isSpecialization ? "" : ` (${skillValue})`
+                        {characterData.isGambiarra ? (
+                          <div className="bg-yellow-100 border border-yellow-300 rounded-lg p-4">
+                            <div className="flex items-center space-x-2 mb-2">
+                              <span className="text-yellow-800 font-bold text-lg">⚡ GAMBIARRA ATIVADA</span>
+                            </div>
+                            <p className="text-yellow-700 text-sm mb-3">
+                              Solução miraculosa aplicada! O teste é considerado um sucesso automático.
+                            </p>
 
-                                return (
-                                  <option key={skill} value={skill}>
-                                    {skill}
-                                    {displayValue}
-                                  </option>
-                                )
-                              })}
-                            </select>
+                            <div>
+                              <label className="block text-xs font-medium text-yellow-700 mb-1">
+                                Descrição da Gambiarra (opcional)
+                              </label>
+                              <input
+                                type="text"
+                                value={characterData.customPhrase || ""}
+                                onChange={(e) => handleCustomPhraseChange(result.memberId, e.target.value)}
+                                placeholder="Descreva como a gambiarra foi aplicada..."
+                                className="w-full text-sm border border-yellow-300 rounded px-2 py-1 focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                              />
+                            </div>
+
+                            {customPhrases.length > 0 && (
+                              <div className="mt-2">
+                                <label className="block text-xs font-medium text-yellow-700 mb-1">
+                                  Ou selecione uma frase pré-definida:
+                                </label>
+                                <select
+                                  value=""
+                                  onChange={(e) => handleCustomPhraseChange(result.memberId, e.target.value)}
+                                  className="w-full text-sm border border-yellow-300 rounded px-2 py-1 focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 bg-white"
+                                >
+                                  <option value="">Selecionar frase...</option>
+                                  {customPhrases.map((phrase, index) => (
+                                    <option key={index} value={phrase}>
+                                      {phrase}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                            )}
                           </div>
-
-                          <div>
-                            <label className="block text-xs font-medium text-gray-600 mb-1">
-                              Atributo <span className="text-red-500">*</span>
-                            </label>
-                            <select
-                              value={characterData.attribute}
-                              onChange={(e) => handleAttributeChange(result.memberId, e.target.value)}
-                              className="w-full text-sm border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                            >
-                              <option value="">Selecione...</option>
-                              {attributes.map((attr) => {
-                                const attrValue = getAttributeWithModifiers(member, attr.key as keyof Member)
-                                return (
-                                  <option key={attr.key} value={attr.key}>
-                                    {attr.name} ({attrValue})
-                                  </option>
-                                )
-                              })}
-                            </select>
-                          </div>
-
-                          <div>
-                            <label className="block text-xs font-medium text-gray-600 mb-1">
-                              Dado (D10) <span className="text-red-500">*</span>
-                            </label>
-                            <input
-                              type="number"
-                              min="1"
-                              max="10"
-                              value={characterData.diceRoll}
-                              onChange={(e) =>
-                                handleDiceRollChange(result.memberId, Number.parseInt(e.target.value, 10) || 1)
-                              }
-                              className="w-full text-sm border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                            />
-                          </div>
-
-                          {globalDifficultyLevel === "" && (
+                        ) : (
+                          <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
                             <div>
                               <label className="block text-xs font-medium text-gray-600 mb-1">
-                                Dificuldade Individual
+                                Perícia <span className="text-red-500">*</span>
+                              </label>
+                              <select
+                                value={characterData.skillName}
+                                onChange={(e) => handleSkillChange(result.memberId, e.target.value)}
+                                className="w-full text-sm border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                              >
+                                <option value="">Selecione...</option>
+                                {getAvailableSkillsForCharacter(result.memberId).map((skill) => {
+                                  const isSpecialization = isSpecializationCategory(skill)
+                                  const skillValue = isSpecialization ? null : getSkillValue(member, skill)
+                                  const displayValue = isSpecialization ? "" : ` (${skillValue})`
+
+                                  return (
+                                    <option key={skill} value={skill}>
+                                      {skill}
+                                      {displayValue}
+                                    </option>
+                                  )
+                                })}
+                              </select>
+                            </div>
+
+                            <div>
+                              <label className="block text-xs font-medium text-gray-600 mb-1">
+                                Atributo <span className="text-red-500">*</span>
+                              </label>
+                              <select
+                                value={characterData.attribute}
+                                onChange={(e) => handleAttributeChange(result.memberId, e.target.value)}
+                                className="w-full text-sm border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                              >
+                                <option value="">Selecione...</option>
+                                {attributes.map((attr) => {
+                                  const attrValue = getAttributeWithModifiers(member, attr.key as keyof Member)
+                                  return (
+                                    <option key={attr.key} value={attr.key}>
+                                      {attr.name} ({attrValue})
+                                    </option>
+                                  )
+                                })}
+                              </select>
+                            </div>
+
+                            <div>
+                              <label className="block text-xs font-medium text-gray-600 mb-1">
+                                Dado (D10) <span className="text-red-500">*</span>
                               </label>
                               <input
                                 type="number"
                                 min="1"
-                                max="50"
-                                value={characterData.individualDifficultyLevel}
+                                max="10"
+                                value={characterData.diceRoll}
                                 onChange={(e) =>
-                                  handleIndividualDifficultyChange(
-                                    result.memberId,
-                                    e.target.value === "" ? "" : Number(e.target.value),
-                                  )
+                                  handleDiceRollChange(result.memberId, Number.parseInt(e.target.value, 10) || 1)
                                 }
                                 className="w-full text-sm border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                                placeholder="Ex: 15"
                               />
                             </div>
-                          )}
 
-                          <div>
-                            <label className="block text-xs font-medium text-gray-600 mb-1">Total</label>
-                            <div
-                              className={`text-sm border border-gray-200 rounded px-2 py-1 font-bold ${
-                                successStatus === "success"
-                                  ? "bg-green-50 text-green-700"
-                                  : successStatus === "failure"
-                                    ? "bg-red-50 text-red-700"
-                                    : "bg-gray-50 text-purple-700"
-                              }`}
-                            >
-                              {characterData.skillName && characterData.attribute
-                                ? getSkillValue(member, characterData.skillName, characterData.specializationInput) +
-                                  getAttributeWithModifiers(member, characterData.attribute as keyof Member) +
-                                  characterData.diceRoll
-                                : "-"}
+                            {globalDifficultyLevel === "" && (
+                              <div>
+                                <label className="block text-xs font-medium text-gray-600 mb-1">
+                                  Dificuldade Individual
+                                </label>
+                                <input
+                                  type="number"
+                                  min="1"
+                                  max="50"
+                                  value={characterData.individualDifficultyLevel}
+                                  onChange={(e) =>
+                                    handleIndividualDifficultyChange(
+                                      result.memberId,
+                                      e.target.value === "" ? "" : Number(e.target.value),
+                                    )
+                                  }
+                                  className="w-full text-sm border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                  placeholder="Ex: 15"
+                                />
+                              </div>
+                            )}
+
+                            <div>
+                              <label className="block text-xs font-medium text-gray-600 mb-1">Total</label>
+                              <div
+                                className={`text-sm border border-gray-200 rounded px-2 py-1 font-bold ${
+                                  successStatus === "success"
+                                    ? "bg-green-50 text-green-700"
+                                    : successStatus === "failure"
+                                      ? "bg-red-50 text-red-700"
+                                      : "bg-gray-50 text-purple-700"
+                                }`}
+                              >
+                                {characterData.skillName && characterData.attribute
+                                  ? getSkillValue(member, characterData.skillName, characterData.specializationInput) +
+                                    getAttributeWithModifiers(member, characterData.attribute as keyof Member) +
+                                    characterData.diceRoll
+                                  : "-"}
+                              </div>
                             </div>
                           </div>
-                        </div>
+                        )}
 
-                        {customPhrases.length > 0 && (
+                        {!characterData.isGambiarra && customPhrases.length > 0 && (
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <div>
                               <label className="block text-xs font-medium text-gray-600 mb-1">
@@ -928,7 +1073,7 @@ export function SkillTestModal({
                           </div>
                         )}
 
-                        {isSpecializationCategory(characterData.skillName) && (
+                        {!characterData.isGambiarra && isSpecializationCategory(characterData.skillName) && (
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <div>
                               <label className="block text-xs font-medium text-gray-600 mb-1">
@@ -995,3 +1140,4 @@ export function SkillTestModal({
     </div>
   )
 }
+

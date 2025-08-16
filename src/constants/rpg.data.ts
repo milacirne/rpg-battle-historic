@@ -405,6 +405,11 @@ export const allPerks: PerkData[] = [
     description:
       "Toda vez que o personagem obter 10 ao rolar 1d10, algo maravilhoso acontecerá, a critério do narrador.",
   },
+  {
+    name: "Gambiarra",
+    description:
+      "Uma vez por RP, o personagem pode criar uma solução miraculosa para um problema qualquer, sem uso de qualquer ação para tal.",
+  },
 ]
 
 export const allHindrances: HindranceData[] = [
@@ -1169,3 +1174,4 @@ export type BattleSheet = {
 }
 
 type RPType = "Oficial" | "Semi-Oficial" | "Livre"
+
