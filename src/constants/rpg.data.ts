@@ -418,6 +418,10 @@ export const allHindrances: HindranceData[] = [
     name: "Azar",
     description: "Toda vez que o personagem obter 1 ao rolar 1d10, algo horrível acontecerá, a critério do narrador.",
   },
+  {
+    name: "Perseguido por Monstros",
+    description: "Toda vez que o personagem rolar 1, aparecerá 1 (um) monstro, a critério do narrador.",
+  },
 ]
 
 export type DivineSkillEffect = {
@@ -1174,4 +1178,5 @@ export type BattleSheet = {
 }
 
 type RPType = "Oficial" | "Semi-Oficial" | "Livre"
+
 

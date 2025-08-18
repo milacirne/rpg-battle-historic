@@ -72,7 +72,7 @@ const normalizeSpecialization = (input: string): string => {
   return input
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "") // Remove accents
+    .replace(/[\u0300-\u036f]/g, "")
     .trim()
 }
 
@@ -223,8 +223,14 @@ export function SkillTestModal({
       return -2
     }
 
-    if (!memberHasSkill(member, skillName)) {
-      return -2
+    if (combatSkills.includes(skillName)) {
+      if (!memberHasSkill(member, skillName)) {
+        return 0
+      }
+    } else {
+      if (!memberHasSkill(member, skillName)) {
+        return -2
+      }
     }
 
     const derivedGlobalSkillEffects = member.derivedGlobalSkillEffects || []
@@ -452,7 +458,6 @@ export function SkillTestModal({
       [characterId]: {
         ...prev[characterId],
         isGambiarra: !prev[characterId]?.isGambiarra,
-        // Reset other fields when gambiarra is enabled
         skillName: prev[characterId]?.isGambiarra ? prev[characterId].skillName : "",
         attribute: prev[characterId]?.isGambiarra ? prev[characterId].attribute : "",
         diceRoll: prev[characterId]?.isGambiarra ? prev[characterId].diceRoll : 1,
@@ -460,12 +465,6 @@ export function SkillTestModal({
       },
     }))
 
-    if (!selectedCharacters[characterId]?.isGambiarra && !editingTestId) {
-      setGambiarraUsed((prev) => ({
-        ...prev,
-        [characterId]: true,
-      }))
-    }
   }
 
   const handleSubmit = () => {
@@ -479,7 +478,6 @@ export function SkillTestModal({
     const invalidCharacters = selectedCharacterIds.filter((characterId) => {
       const characterData = selectedCharacters[characterId]
 
-      // If using gambiarra, no need for skill/attribute validation
       if (characterData.isGambiarra) {
         return false
       }
@@ -503,6 +501,13 @@ export function SkillTestModal({
       if (!member || !characterData) return
 
       if (characterData.isGambiarra) {
+        if (!editingTestId) {
+          setGambiarraUsed((prev) => ({
+            ...prev,
+            [characterId]: true,
+          }))
+        }
+
         const result: SkillTestResult = {
           id: `${Date.now()}-${Math.random()}-${characterId}`,
           testName: testName || undefined,
@@ -514,7 +519,7 @@ export function SkillTestModal({
           skillValue: 0,
           attributeValue: 0,
           diceRoll: 0,
-          totalResult: 999, // High value to ensure success
+          totalResult: 999,
           timestamp: new Date().toISOString(),
           isCombat: characterData.isCombat,
           globalDifficultyLevel: globalDifficultyLevel !== "" ? Number(globalDifficultyLevel) : undefined,
@@ -523,13 +528,13 @@ export function SkillTestModal({
             characterData.individualDifficultyLevel !== ""
               ? Number(characterData.individualDifficultyLevel)
               : undefined,
-          isSuccess: true, // Gambiarra always succeeds
+          isSuccess: true,
           customPhrase: characterData.customPhrase || "",
           customPhraseStatus: "success",
           isGambiarra: true,
         }
         results.push(result)
-        totalSum += 999 // Add high value to total sum
+        totalSum += 999
         return
       }
 
@@ -588,7 +593,6 @@ export function SkillTestModal({
       const globalSuccess = totalSum >= globalDifficultyLevel
       results.forEach((result) => {
         if (!result.isGambiarra) {
-          // Don't override gambiarra success
           result.isSuccess = globalSuccess
         }
       })
@@ -778,7 +782,7 @@ export function SkillTestModal({
                 let successStatus: "success" | "failure" | "neutral" = "neutral"
                 if (isSelected) {
                   if (characterData.isGambiarra) {
-                    successStatus = "success" // Gambiarra always succeeds
+                    successStatus = "success"
                   } else if (characterData.skillName && characterData.attribute) {
                     const skillValue = getSkillValue(member, characterData.skillName, characterData.specializationInput)
                     const attributeValue = getAttributeWithModifiers(member, characterData.attribute as keyof Member)
@@ -926,7 +930,13 @@ export function SkillTestModal({
                                 {getAvailableSkillsForCharacter(result.memberId).map((skill) => {
                                   const isSpecialization = isSpecializationCategory(skill)
                                   const skillValue = isSpecialization ? null : getSkillValue(member, skill)
-                                  const displayValue = isSpecialization ? "" : ` (${skillValue})`
+                                  const isCombatSkill = combatSkills.includes(skill)
+
+                                  const displayValue = isSpecialization
+                                    ? ""
+                                    : isCombatSkill && skillValue === 0
+                                      ? ""
+                                      : ` (${skillValue})`
 
                                   return (
                                     <option key={skill} value={skill}>
@@ -1140,4 +1150,5 @@ export function SkillTestModal({
     </div>
   )
 }
+
 

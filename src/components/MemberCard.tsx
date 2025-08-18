@@ -39,10 +39,9 @@ export default function MemberCard({ member, onEdit, onDelete }: MemberCardProps
   return (
     <>
       <div className="bg-white rounded-2xl shadow-md p-5 mb-5 hover:shadow-lg transition duration-300 text-sm flex flex-col justify-between">
-        {/* Header: Nome + Emblema */}
+        {/* Header*/}
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-base font-semibold text-gray-900 truncate max-w-[11rem]">{member.name}</h3>
-          {/* Aplica a classe dinâmica para a tag */}
           <span className={`text-xs font-medium px-3 py-0.5 rounded-full ${emblemClass}`}>{emblemText}</span>
         </div>
 
@@ -56,15 +55,22 @@ export default function MemberCard({ member, onEdit, onDelete }: MemberCardProps
           </div>
         </div>
 
-        {/* Botões */}
+        {/* Buttons */}
         <div className="mt-auto pt-3 border-t border-gray-200 flex justify-end gap-2">
+          {/* Info */}
           <button
             onClick={() => setShowInfoModal(true)}
-            className="px-3 py-1.5 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 transition cursor-pointer flex items-center gap-1"
+            className="px-2 py-1.5 text-blue-500 text-xs rounded-lg border border-transparent hover:border-blue-300 hover:bg-blue-50/40 dark:hover:bg-blue-500/10 
+                      transition-all duration-200 cursor-pointer flex items-center gap-1 shadow-sm hover:shadow-md"
             aria-label={`Ver informações de ${member.name}`}
             title="Ver informações detalhadas"
           >
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg
+              className="w-3.5 h-3.5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -72,28 +78,31 @@ export default function MemberCard({ member, onEdit, onDelete }: MemberCardProps
                 d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
               />
             </svg>
-            Info
           </button>
+
+          {/* Edit */}
           <button
             onClick={() => onEdit(member)}
-            className="px-3 py-1.5 bg-green-400 text-white text-xs rounded hover:bg-green-500 transition cursor-pointer flex items-center gap-1"
+            className="px-2 py-1.5 text-green-500 text-xs rounded-lg border border-transparent hover:border-green-300 hover:bg-green-50/40 dark:hover:bg-green-500/10 
+                      transition-all duration-200 cursor-pointer flex items-center gap-1 shadow-sm hover:shadow-md"
             aria-label={`Editar ${member.name}`}
           >
-            <FaEdit className="w-3 h-3" />
-            Editar
+            <FaEdit className="w-3.5 h-3.5" />
           </button>
+
+          {/* Delete */}
           <button
             onClick={() => onDelete(member.id)}
-            className="px-3 py-1.5 bg-red-500 text-white text-xs rounded hover:bg-red-600 transition cursor-pointer flex items-center gap-1"
+            className="px-2 py-1.5 text-red-500 text-xs rounded-lg border border-transparent hover:border-red-300 hover:bg-red-50/40 dark:hover:bg-red-500/10 
+                      transition-all duration-200 cursor-pointer flex items-center gap-1 shadow-sm hover:shadow-md"
             aria-label={`Apagar ${member.name}`}
           >
-            <FaTrash className="w-3 h-3" />
-            Apagar
+            <FaTrash className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
 
-      {/* Modal de Informações */}
+      {/* Info Modal */}
       {showInfoModal && <MemberInfoModal member={member} onClose={() => setShowInfoModal(false)} />}
     </>
   )
