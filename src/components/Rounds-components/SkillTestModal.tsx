@@ -9,6 +9,10 @@ import {
   disabilities,
 } from "../../constants/rpg.data"
 
+import { TestConfigurationSection } from "./SkillTestModal-components/TestConfigurationSection"
+import { CustomPhrasesSection } from "./SkillTestModal-components/CustomPhrasesSection"
+import { CharacterTestRow } from "./SkillTestModal-components/CharacterTestRow"
+
 type SkillTestResult = {
   id: string
   testName?: string
@@ -31,6 +35,8 @@ type SkillTestResult = {
   customPhrase?: string
   customPhraseStatus?: "success" | "failure" | "neutral"
   isGambiarra?: boolean
+  hasTerrainAdvantage?: boolean
+  hasTerrainDisadvantage?: boolean
 }
 
 type SkillTestModalProps = {
@@ -109,6 +115,8 @@ export function SkillTestModal({
       customPhrase?: string
       customPhraseStatus?: "success" | "failure" | "neutral"
       isGambiarra?: boolean
+      hasTerrainAdvantage?: boolean
+      hasTerrainDisadvantage?: boolean
     }
   }>({})
 
@@ -148,6 +156,8 @@ export function SkillTestModal({
             customPhrase: test.customPhrase || "",
             customPhraseStatus: test.customPhraseStatus || "neutral",
             isGambiarra: test.isGambiarra || false,
+            hasTerrainAdvantage: test.hasTerrainAdvantage || false,
+            hasTerrainDisadvantage: test.hasTerrainDisadvantage || false,
           }
         }
       })
@@ -322,13 +332,6 @@ export function SkillTestModal({
     return value
   }
 
-  const handleAddCustomPhrase = () => {
-    if (newPhrase.trim() && !customPhrases.includes(newPhrase.trim())) {
-      setCustomPhrases((prev) => [...prev, newPhrase.trim()])
-      setNewPhrase("")
-    }
-  }
-
   const handleRemoveCustomPhrase = (phraseToRemove: string) => {
     setCustomPhrases((prev) => prev.filter((phrase) => phrase !== phraseToRemove))
     setSelectedCharacters((prev) => {
@@ -379,6 +382,8 @@ export function SkillTestModal({
         customPhrase: prev[characterId]?.customPhrase || "",
         customPhraseStatus: prev[characterId]?.customPhraseStatus || "neutral",
         isGambiarra: false,
+        hasTerrainAdvantage: prev[characterId]?.hasTerrainAdvantage || false,
+        hasTerrainDisadvantage: prev[characterId]?.hasTerrainDisadvantage || false,
       },
     }))
   }
@@ -464,7 +469,34 @@ export function SkillTestModal({
         individualDifficultyLevel: prev[characterId]?.isGambiarra ? prev[characterId].individualDifficultyLevel : "",
       },
     }))
+  }
 
+  const handleTerrainAdvantageToggle = (characterId: string) => {
+    setSelectedCharacters((prev) => ({
+      ...prev,
+      [characterId]: {
+        ...prev[characterId],
+        hasTerrainAdvantage: !prev[characterId]?.hasTerrainAdvantage,
+      },
+    }))
+  }
+
+  const handleTerrainDisadvantageToggle = (characterId: string) => {
+    setSelectedCharacters((prev) => ({
+      ...prev,
+      [characterId]: {
+        ...prev[characterId],
+        hasTerrainDisadvantage: !prev[characterId]?.hasTerrainDisadvantage,
+      },
+    }))
+  }
+
+  const characterHasTerrainAdvantage = (member: Member): boolean => {
+    return (member.perks || []).includes("Terreno Favorável")
+  }
+
+  const characterHasTerrainDisadvantage = (member: Member): boolean => {
+    return (member.hindrances || []).includes("Terreno Desfavorável")
   }
 
   const handleSubmit = () => {
@@ -532,6 +564,8 @@ export function SkillTestModal({
           customPhrase: characterData.customPhrase || "",
           customPhraseStatus: "success",
           isGambiarra: true,
+          hasTerrainAdvantage: characterData.hasTerrainAdvantage || false,
+          hasTerrainDisadvantage: characterData.hasTerrainDisadvantage || false,
         }
         results.push(result)
         totalSum += 999
@@ -540,7 +574,14 @@ export function SkillTestModal({
 
       const skillValue = getSkillValue(member, characterData.skillName, characterData.specializationInput)
       const attributeValue = getAttributeWithModifiers(member, characterData.attribute as keyof Member)
-      const totalResult = skillValue + attributeValue + characterData.diceRoll
+      let totalResult = skillValue + attributeValue + characterData.diceRoll
+
+      if (characterData.hasTerrainAdvantage && characterData.isCombat) {
+        totalResult += 1
+      }
+      if (characterData.hasTerrainDisadvantage && characterData.isCombat) {
+        totalResult -= 1
+      }
 
       totalSum += totalResult
 
@@ -584,6 +625,8 @@ export function SkillTestModal({
         isSuccess,
         customPhrase: characterData.customPhrase || undefined,
         customPhraseStatus: characterData.customPhraseStatus || "neutral",
+        hasTerrainAdvantage: characterData.hasTerrainAdvantage || false,
+        hasTerrainDisadvantage: characterData.hasTerrainDisadvantage || false,
       }
 
       results.push(result)
@@ -646,111 +689,25 @@ export function SkillTestModal({
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700">Nome do Teste (opcional)</label>
-              <input
-                type="text"
-                value={testName}
-                onChange={(e) => setTestName(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
-                placeholder="Ex: Teste de Furtividade"
-              />
-            </div>
+          <TestConfigurationSection
+            testName={testName}
+            setTestName={setTestName}
+            globalDifficultyLevel={globalDifficultyLevel}
+            setGlobalDifficultyLevel={setGlobalDifficultyLevel}
+            isGlobalSum={isGlobalSum}
+            setIsGlobalSum={setIsGlobalSum}
+            totalSum={totalSum}
+          />
 
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700">
-                Nível de Dificuldade Global (opcional)
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="number"
-                  min="1"
-                  max="50"
-                  value={globalDifficultyLevel}
-                  onChange={(e) => setGlobalDifficultyLevel(e.target.value === "" ? "" : Number(e.target.value))}
-                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
-                  placeholder="Ex: 15"
-                />
-                {globalDifficultyLevel !== "" && (
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      checked={isGlobalSum}
-                      onChange={(e) => setIsGlobalSum(e.target.checked)}
-                      className="w-4 h-4 text-green-600 focus:ring-green-500 border-gray-300 rounded cursor-pointer"
-                    />
-                    <label className="text-sm text-gray-600">Somatório</label>
-                  </div>
-                )}
-              </div>
-              {globalDifficultyLevel !== "" && isGlobalSum && (
-                <p className="text-xs text-gray-500">
-                  A soma de todos os testes será comparada com o nível de dificuldade. Total atual: {totalSum}
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex items-center gap-x-4">
-              <label className="block text-sm font-semibold text-gray-700">Frases Customizadas (opcional)</label>
-              <button
-                type="button"
-                onClick={() => setShowCustomPhrasesInput(!showCustomPhrasesInput)}
-                className="flex items-center justify-center h-7 px-2 
-                  bg-gradient-to-r from-purple-500 to-purple-600 
-                  text-white rounded-lg shadow-md 
-                  hover:from-purple-600 hover:to-purple-700 
-                  active:scale-95 transition-all duration-200 
-                  cursor-pointer w-full sm:w-auto"
-                title={showCustomPhrasesInput ? "Ocultar frases customizadas" : "Adicionar frases customizadas"}
-              >
-                <span className="text-lg font-bold">{showCustomPhrasesInput ? "−" : "+"}</span>
-              </button>
-            </div>
-
-            {showCustomPhrasesInput && (
-              <div className="border border-gray-300 rounded-lg p-3">
-                <div className="flex gap-2 mb-3">
-                  <input
-                    type="text"
-                    value={newPhrase}
-                    onChange={(e) => setNewPhrase(e.target.value)}
-                    className="flex-1 border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors text-sm"
-                    placeholder="Ex: passou despercebido dos olhos da Medusa"
-                    onKeyPress={(e) => e.key === "Enter" && handleAddCustomPhrase()}
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAddCustomPhrase}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium cursor-pointer w-full sm:w-auto"
-                  >
-                    Adicionar
-                  </button>
-                </div>
-                {customPhrases.length > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-xs text-gray-600">Frases disponíveis:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {customPhrases.map((phrase, index) => (
-                        <div key={index} className="flex items-center bg-gray-100 rounded px-2 py-1 text-sm">
-                          <span className="mr-2">{phrase}</span>
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveCustomPhrase(phrase)}
-                            className="text-red-500 hover:text-red-700 text-xs cursor-pointer"
-                          >
-                            ×
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          <CustomPhrasesSection
+            customPhrases={customPhrases}
+            setCustomPhrases={setCustomPhrases}
+            newPhrase={newPhrase}
+            setNewPhrase={setNewPhrase}
+            showCustomPhrasesInput={showCustomPhrasesInput}
+            setShowCustomPhrasesInput={setShowCustomPhrasesInput}
+            onRemovePhrase={handleRemoveCustomPhrase}
+          />
 
           <div className="space-y-2">
             <label className="block text-sm font-semibold text-gray-700">
@@ -774,6 +731,8 @@ export function SkillTestModal({
                   customPhrase: "",
                   customPhraseStatus: "neutral",
                   isGambiarra: false,
+                  hasTerrainAdvantage: false,
+                  hasTerrainDisadvantage: false,
                 }
 
                 const teamColorClass =
@@ -812,307 +771,42 @@ export function SkillTestModal({
                       : "border-l-4 border-purple-500"
 
                 return (
-                  <div
+                  <CharacterTestRow
                     key={result.memberId}
-                    className={`${index > 0 ? "border-t border-gray-500" : ""} py-3 ${containerBorderClass}`}
-                  >
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center space-x-3">
-                        <div className="pl-3">
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={() => handleCharacterToggle(result.memberId)}
-                            className="w-4 h-4 text-green-600 focus:ring-green-500 border-gray-300 rounded cursor-pointer"
-                          />
-                        </div>
-                        <span className="text-sm font-medium text-gray-700">
-                          {result.name} (
-                          <span className={`font-semibold px-2 py-1 rounded ${teamColorClass}`}>{result.teamName}</span>
-                          ) - Iniciativa:{" "}
-                          <span className="font-bold text-lg text-gray-900">{result.totalInitiative}</span>
-                        </span>
-                      </div>
-
-                      {isSelected && (
-                        <div className="flex items-center space-x-4">
-                          {characterHasGambiarra(member) && (
-                            <div className="flex items-center space-x-2">
-                              <input
-                                type="checkbox"
-                                checked={characterData.isGambiarra || false}
-                                onChange={() => handleGambiarraToggle(result.memberId)}
-                                disabled={
-                                  !editingTestId && gambiarraUsed[result.memberId] && !characterData.isGambiarra
-                                }
-                                className="w-4 h-4 text-yellow-600 focus:ring-yellow-500 border-gray-300 rounded cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                              />
-                              <label className="text-sm text-yellow-600 font-medium">
-                                Gambiarra{" "}
-                                {!editingTestId &&
-                                  gambiarraUsed[result.memberId] &&
-                                  !characterData.isGambiarra &&
-                                  "(Usada)"}
-                              </label>
-                            </div>
-                          )}
-
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              checked={characterData.isCombat}
-                              onChange={() => handleCombatToggle(result.memberId)}
-                              disabled={characterData.isGambiarra}
-                              className="w-4 h-4 text-red-600 focus:ring-red-500 border-gray-300 rounded cursor-pointer disabled:opacity-50"
-                            />
-                            <label className="text-sm text-gray-600">Combate</label>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {isSelected && (
-                      <div className="ml-7 space-y-3">
-                        {characterData.isGambiarra ? (
-                          <div className="bg-yellow-100 border border-yellow-300 rounded-lg p-4">
-                            <div className="flex items-center space-x-2 mb-2">
-                              <span className="text-yellow-800 font-bold text-lg">⚡ GAMBIARRA ATIVADA</span>
-                            </div>
-                            <p className="text-yellow-700 text-sm mb-3">
-                              Solução miraculosa aplicada! O teste é considerado um sucesso automático.
-                            </p>
-
-                            <div>
-                              <label className="block text-xs font-medium text-yellow-700 mb-1">
-                                Descrição da Gambiarra (opcional)
-                              </label>
-                              <input
-                                type="text"
-                                value={characterData.customPhrase || ""}
-                                onChange={(e) => handleCustomPhraseChange(result.memberId, e.target.value)}
-                                placeholder="Descreva como a gambiarra foi aplicada..."
-                                className="w-full text-sm border border-yellow-300 rounded px-2 py-1 focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                              />
-                            </div>
-
-                            {customPhrases.length > 0 && (
-                              <div className="mt-2">
-                                <label className="block text-xs font-medium text-yellow-700 mb-1">
-                                  Ou selecione uma frase pré-definida:
-                                </label>
-                                <select
-                                  value=""
-                                  onChange={(e) => handleCustomPhraseChange(result.memberId, e.target.value)}
-                                  className="w-full text-sm border border-yellow-300 rounded px-2 py-1 focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 bg-white"
-                                >
-                                  <option value="">Selecionar frase...</option>
-                                  {customPhrases.map((phrase, index) => (
-                                    <option key={index} value={phrase}>
-                                      {phrase}
-                                    </option>
-                                  ))}
-                                </select>
-                              </div>
-                            )}
-                          </div>
-                        ) : (
-                          <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-                            <div>
-                              <label className="block text-xs font-medium text-gray-600 mb-1">
-                                Perícia <span className="text-red-500">*</span>
-                              </label>
-                              <select
-                                value={characterData.skillName}
-                                onChange={(e) => handleSkillChange(result.memberId, e.target.value)}
-                                className="w-full text-sm border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                              >
-                                <option value="">Selecione...</option>
-                                {getAvailableSkillsForCharacter(result.memberId).map((skill) => {
-                                  const isSpecialization = isSpecializationCategory(skill)
-                                  const skillValue = isSpecialization ? null : getSkillValue(member, skill)
-                                  const isCombatSkill = combatSkills.includes(skill)
-
-                                  const displayValue = isSpecialization
-                                    ? ""
-                                    : isCombatSkill && skillValue === 0
-                                      ? ""
-                                      : ` (${skillValue})`
-
-                                  return (
-                                    <option key={skill} value={skill}>
-                                      {skill}
-                                      {displayValue}
-                                    </option>
-                                  )
-                                })}
-                              </select>
-                            </div>
-
-                            <div>
-                              <label className="block text-xs font-medium text-gray-600 mb-1">
-                                Atributo <span className="text-red-500">*</span>
-                              </label>
-                              <select
-                                value={characterData.attribute}
-                                onChange={(e) => handleAttributeChange(result.memberId, e.target.value)}
-                                className="w-full text-sm border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                              >
-                                <option value="">Selecione...</option>
-                                {attributes.map((attr) => {
-                                  const attrValue = getAttributeWithModifiers(member, attr.key as keyof Member)
-                                  return (
-                                    <option key={attr.key} value={attr.key}>
-                                      {attr.name} ({attrValue})
-                                    </option>
-                                  )
-                                })}
-                              </select>
-                            </div>
-
-                            <div>
-                              <label className="block text-xs font-medium text-gray-600 mb-1">
-                                Dado (D10) <span className="text-red-500">*</span>
-                              </label>
-                              <input
-                                type="number"
-                                min="1"
-                                max="10"
-                                value={characterData.diceRoll}
-                                onChange={(e) =>
-                                  handleDiceRollChange(result.memberId, Number.parseInt(e.target.value, 10) || 1)
-                                }
-                                className="w-full text-sm border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                              />
-                            </div>
-
-                            {globalDifficultyLevel === "" && (
-                              <div>
-                                <label className="block text-xs font-medium text-gray-600 mb-1">
-                                  Dificuldade Individual
-                                </label>
-                                <input
-                                  type="number"
-                                  min="1"
-                                  max="50"
-                                  value={characterData.individualDifficultyLevel}
-                                  onChange={(e) =>
-                                    handleIndividualDifficultyChange(
-                                      result.memberId,
-                                      e.target.value === "" ? "" : Number(e.target.value),
-                                    )
-                                  }
-                                  className="w-full text-sm border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                                  placeholder="Ex: 15"
-                                />
-                              </div>
-                            )}
-
-                            <div>
-                              <label className="block text-xs font-medium text-gray-600 mb-1">Total</label>
-                              <div
-                                className={`text-sm border border-gray-200 rounded px-2 py-1 font-bold ${
-                                  successStatus === "success"
-                                    ? "bg-green-50 text-green-700"
-                                    : successStatus === "failure"
-                                      ? "bg-red-50 text-red-700"
-                                      : "bg-gray-50 text-purple-700"
-                                }`}
-                              >
-                                {characterData.skillName && characterData.attribute
-                                  ? getSkillValue(member, characterData.skillName, characterData.specializationInput) +
-                                    getAttributeWithModifiers(member, characterData.attribute as keyof Member) +
-                                    characterData.diceRoll
-                                  : "-"}
-                              </div>
-                            </div>
-                          </div>
-                        )}
-
-                        {!characterData.isGambiarra && customPhrases.length > 0 && (
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <div>
-                              <label className="block text-xs font-medium text-gray-600 mb-1">
-                                Frase Customizada (opcional)
-                              </label>
-                              <select
-                                value={characterData.customPhrase || ""}
-                                onChange={(e) => handleCustomPhraseChange(result.memberId, e.target.value)}
-                                className="w-full text-sm border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                              >
-                                <option value="">Nenhuma frase selecionada</option>
-                                {customPhrases.map((phrase, index) => (
-                                  <option key={index} value={phrase}>
-                                    {phrase}
-                                  </option>
-                                ))}
-                              </select>
-
-                              {characterData.customPhrase && (
-                                <div className="flex items-center gap-4 mt-2">
-                                  <label className="flex items-center gap-1">
-                                    <input
-                                      type="checkbox"
-                                      checked={characterData.customPhraseStatus === "success"}
-                                      onChange={(e) =>
-                                        handleCustomPhraseStatusChange(
-                                          result.memberId,
-                                          e.target.checked ? "success" : "neutral",
-                                        )
-                                      }
-                                      className="w-3 h-3 text-green-600 focus:ring-green-500 border-gray-300 rounded cursor-pointer"
-                                    />
-                                    <span className="text-xs text-green-600 font-medium">Sucesso</span>
-                                  </label>
-                                  <label className="flex items-center gap-1">
-                                    <input
-                                      type="checkbox"
-                                      checked={characterData.customPhraseStatus === "failure"}
-                                      onChange={(e) =>
-                                        handleCustomPhraseStatusChange(
-                                          result.memberId,
-                                          e.target.checked ? "failure" : "neutral",
-                                        )
-                                      }
-                                      className="w-3 h-3 text-red-600 focus:ring-red-500 border-gray-300 rounded cursor-pointer"
-                                    />
-                                    <span className="text-xs text-red-600 font-medium">Falha</span>
-                                  </label>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )}
-
-                        {!characterData.isGambiarra && isSpecializationCategory(characterData.skillName) && (
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <div>
-                              <label className="block text-xs font-medium text-gray-600 mb-1">
-                                Especificação da Perícia <span className="text-red-500">*</span>
-                              </label>
-                              <div className="flex items-center gap-2">
-                                <input
-                                  type="text"
-                                  value={characterData.specializationInput || ""}
-                                  onChange={(e) => handleSpecializationInputChange(result.memberId, e.target.value)}
-                                  className="flex-1 text-sm border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                                  placeholder={`Ex: ${characterData.skillName === "Esportes" ? "Natação" : characterData.skillName === "Idiomas" ? "Inglês" : "Especifique..."}`}
-                                />
-                                {characterData.specializationInput && (
-                                  <span className="text-sm font-medium text-gray-600 bg-gray-100 px-2 py-1 rounded">
-                                    ({getSkillValue(member, characterData.skillName, characterData.specializationInput)}
-                                    )
-                                  </span>
-                                )}
-                              </div>
-                              <p className="text-xs text-gray-500 mt-1">
-                                Se o personagem não possuir esta especialização, será aplicado -2 no teste.
-                              </p>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
+                    result={result}
+                    member={member}
+                    index={index}
+                    isSelected={isSelected}
+                    characterData={characterData}
+                    teamColorClass={teamColorClass}
+                    successStatus={successStatus}
+                    containerBorderClass={containerBorderClass}
+                    team1Name={team1Name}
+                    globalDifficultyLevel={globalDifficultyLevel}
+                    customPhrases={customPhrases}
+                    availableSkills={getAvailableSkillsForCharacter(result.memberId)}
+                    attributes={attributes}
+                    gambiarraUsed={gambiarraUsed}
+                    editingTestId={editingTestId}
+                    onCharacterToggle={handleCharacterToggle}
+                    onGambiarraToggle={handleGambiarraToggle}
+                    onCombatToggle={handleCombatToggle}
+                    onSkillChange={handleSkillChange}
+                    onAttributeChange={handleAttributeChange}
+                    onDiceRollChange={handleDiceRollChange}
+                    onIndividualDifficultyChange={handleIndividualDifficultyChange}
+                    onSpecializationInputChange={handleSpecializationInputChange}
+                    onCustomPhraseChange={handleCustomPhraseChange}
+                    onCustomPhraseStatusChange={handleCustomPhraseStatusChange}
+                    characterHasGambiarra={characterHasGambiarra}
+                    getSkillValue={getSkillValue}
+                    getAttributeWithModifiers={getAttributeWithModifiers}
+                    isSpecializationCategory={isSpecializationCategory}
+                    characterHasTerrainAdvantage={characterHasTerrainAdvantage}
+                    characterHasTerrainDisadvantage={characterHasTerrainDisadvantage}
+                    onTerrainAdvantageToggle={handleTerrainAdvantageToggle}
+                    onTerrainDisadvantageToggle={handleTerrainDisadvantageToggle}
+                  />
                 )
               })}
             </div>
@@ -1150,5 +844,7 @@ export function SkillTestModal({
     </div>
   )
 }
+
+
 
 

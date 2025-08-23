@@ -46,6 +46,8 @@ type SkillTestResult = {
   customPhrase?: string
   customPhraseStatus?: "success" | "failure" | "neutral"
   isGambiarra?: boolean
+  hasTerrainAdvantage?: boolean
+  hasTerrainDisadvantage?: boolean
 }
 
 export default function AddRoundPage({ sheets, setSheets }: Props) {
@@ -124,7 +126,6 @@ export default function AddRoundPage({ sheets, setSheets }: Props) {
       delete newGroups[groupId]
       return newGroups
     })
-
   }
 
   function handleEditTestGroup(groupId: string) {
@@ -407,6 +408,8 @@ export default function AddRoundPage({ sheets, setSheets }: Props) {
                         const isGambiarraUsed = result.isGambiarra || false
                         const isCriticalSuccess = result.diceRoll === 10
                         const isCriticalFailure = result.diceRoll === 1
+                        const hasTerrainAdvantage = result.hasTerrainAdvantage || false
+                        const hasTerrainDisadvantage = result.hasTerrainDisadvantage || false
 
                         let containerClass = `flex flex-col sm:flex-row items-center justify-between p-2 sm:p-3 rounded-lg shadow-sm transition-all duration-200 ${result.teamName === team1Name ? "bg-blue-50 border-l-4 border-blue-500" : "bg-red-50 border-l-4 border-red-500"}`
 
@@ -485,13 +488,28 @@ export default function AddRoundPage({ sheets, setSheets }: Props) {
                                   Perseguido por Monstros
                                 </span>
                               )}
+                              {hasTerrainAdvantage && (
+                                <span className="ml-2 px-3 py-1 bg-green-600 text-white text-xs font-medium rounded-full shadow-sm border border-green-700 flex items-center gap-1">
+                                  <span className="w-1.5 h-1.5 bg-green-300 rounded-full animate-pulse"></span>
+                                  Terreno Favorável
+                                </span>
+                              )}
+                              {hasTerrainDisadvantage && (
+                                <span className="ml-2 px-3 py-1 bg-orange-600 text-white text-xs font-medium rounded-full shadow-sm border border-orange-700 flex items-center gap-1">
+                                  <span className="w-1.5 h-1.5 bg-orange-300 rounded-full animate-pulse"></span>
+                                  Terreno Desfavorável
+                                </span>
+                              )}
                               {isCriticalSuccess && (
                                 <span className="ml-2 px-3 py-1 bg-green-600 text-white text-xs font-medium rounded-full shadow-sm border border-green-700 flex items-center gap-1">
                                   <span className="w-1.5 h-1.5 bg-green-300 rounded-full animate-pulse"></span>
                                   Acerto Crítico
                                 </span>
                               )}
-                              {(isCriticalFailure || isPerseguidoTriggered || isAzarTriggered) && (
+                              {(isCriticalFailure ||
+                                isPerseguidoTriggered ||
+                                isAzarTriggered ||
+                                hasTerrainDisadvantage) && (
                                 <span className="ml-2 px-3 py-1 bg-red-600 text-white text-xs font-medium rounded-full shadow-sm border border-red-700 flex items-center gap-1">
                                   <span className="w-1.5 h-1.5 bg-red-300 rounded-full animate-pulse"></span>
                                   Falha Crítica

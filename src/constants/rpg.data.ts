@@ -410,6 +410,11 @@ export const allPerks: PerkData[] = [
     description:
       "Uma vez por RP, o personagem pode criar uma solução miraculosa para um problema qualquer, sem uso de qualquer ação para tal.",
   },
+  {
+    name: "Terreno Favorável",
+    description:
+      "O personagem recebe +1 em testes de Ataque e de Defesa quando estiver no terreno que lhe confira vantagem.",
+  },
 ]
 
 export const allHindrances: HindranceData[] = [
@@ -421,6 +426,10 @@ export const allHindrances: HindranceData[] = [
   {
     name: "Perseguido por Monstros",
     description: "Toda vez que o personagem rolar 1, aparecerá 1 (um) monstro, a critério do narrador.",
+  },
+  {
+    name: "Terreno Desfavorável",
+    description: "O personagem recebe -1 em testes de ataque e de defesa quando estiver no terreno que lhe confira desvantagem.",
   },
 ]
 
@@ -1178,5 +1187,3 @@ export type BattleSheet = {
 }
 
 type RPType = "Oficial" | "Semi-Oficial" | "Livre"
-
-
